@@ -1,0 +1,130 @@
+﻿<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>LLM Model Archiv</title>
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="color-scheme" content="dark" />
+  </head>
+  <body>
+    <div class="bg"></div>
+
+    <header class="container header">
+      <div class="brand">
+        <div class="logo">LLM</div>
+        <div>
+          <h1>Model Archiv</h1>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="panel" id="controlsPanel">
+        <div class="controls" id="controls">
+          <div class="control">
+            <label for="q">Suche</label>
+            <input id="q" type="search" placeholder="Modellname, Entwickler, Tags" autocomplete="off" />
+          </div>
+
+          <div class="control" id="developerWrap">
+            <label for="developer">Entwickler</label>
+            <select id="developer"></select>
+          </div>
+
+          <div class="control" id="modalityWrap">
+            <label for="modality">Modalität</label>
+            <select id="modality">
+              <option value="">Alle</option>
+              <option value="text">Text</option>
+              <option value="image">Bild</option>
+              <option value="audio">Audio</option>
+              <option value="video">Video</option>
+              <option value="multimodal">Multimodal</option>
+            </select>
+          </div>
+
+          <div class="control" id="statusWrap">
+            <label for="status">Status</label>
+            <select id="status">
+              <option value="">Alle</option>
+              <option value="active">Active</option>
+              <option value="preview">Preview</option>
+              <option value="deprecated">Deprecated</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label for="sort">Sortierung</label>
+            <select id="sort"></select>
+          </div>
+
+          <div class="control control-inline">
+            <button class="btn" id="resetBtn" type="button">Zurücksetzen</button>
+            <div class="muted small" id="countLabel">Lade Daten</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="tokenCalcPanel">
+        <h2 class="calc-title">Tokenrechner</h2>
+        <div class="calc-grid">
+          <div class="control calc-model-control">
+            <label for="calcModelSearch">Modell suchen</label>
+            <input id="calcModelSearch" type="search" placeholder="Modellname oder Entwickler" autocomplete="off" />
+            <div id="calcModelMenu" class="calc-menu" hidden></div>
+          </div>
+          <div class="control">
+            <label for="calcInputTokens">Input Tokens</label>
+            <input id="calcInputTokens" type="number" min="0" step="1" value="1000" />
+          </div>
+          <div class="control">
+            <label for="calcOutputTokens">Output Tokens</label>
+            <input id="calcOutputTokens" type="number" min="0" step="1" value="1000" />
+          </div>
+          <div class="calc-result" id="calcResult">Gesamtkosten: -</div>
+        </div>
+      </section>
+
+      <section class="panel table-wrap">
+        <table class="table" aria-label="AI Modelle Tabelle">
+          <thead id="thead"></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="empty muted" id="emptyState" hidden>Keine Treffer.</div>
+      </section>
+    </main>
+
+    <dialog id="detailDialog" class="dialog">
+      <form method="dialog" class="dialog-inner">
+        <div class="dialog-head">
+          <div class="dialog-title">
+            <div class="dialog-logo" id="dLogo"></div>
+            <div>
+              <div class="h2" id="dName"></div>
+              <div class="muted" id="dDev"></div>
+            </div>
+          </div>
+          <button class="icon-btn" value="close" aria-label="Schließen" type="submit">✖</button>
+        </div>
+
+        <div class="dialog-body">
+          <div class="kv" id="dKV"></div>
+          <div class="notes" id="dNotesWrap" hidden>
+            <div class="k">Hinweise</div>
+            <div class="v" id="dNotes"></div>
+          </div>
+          <div class="links" id="dLinks"></div>
+        </div>
+
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
+
+
+
+
+

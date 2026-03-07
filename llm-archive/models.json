@@ -1,0 +1,746 @@
+[
+{
+  "id": "seed_2.0_mini",
+  "name": "Seed-2.0-Mini",
+  "developerName": "ByteDance Seed",
+  "developerLogoUrl": "assets/ByteDance_Seed.svg",
+  "contextWindow": 262144,
+  "inputCostPer1MTokens": 0.1,
+  "outputCostPer1MTokens": 0.4,
+  "releaseDate": "2026-02-26"
+},
+
+{
+  "id": "nano_banana_2_3.1_flash_image_preview",
+  "name": "Nano Banana 2 (Gemini 3.1 Flash Image Preview)",
+  "developerName": "Google",
+  "developerLogoUrl": "assets/Google.svg",
+  "modelIconUrl": "assets/icons/NanoBanana.svg",
+  "contextWindow": 65636,
+  "inputCostPer1MTokens": 0.25,
+  "outputCostPer1MTokens": 1.5,
+  "releaseDate": "2026-02-26"
+},
+
+{
+  "id": "qwen3.5_35b_a3b",
+  "name": "Qwen3.5-35B-A3B",
+  "developerName": "Alibaba Cloud",
+  "developerLogoUrl": "assets/Alibaba_Cloud.svg",
+  "modelIconUrl": "assets/icons/Qwen.svg",
+  "contextWindow": 262144,
+  "inputCostPer1MTokens": 0.25,
+  "outputCostPer1MTokens": 2,
+  "releaseDate": "2026-02-25"
+},
+{
+  "id": "qwen3.5_27b",
+  "name": "Qwen3.5-27B",
+  "developerName": "Alibaba Cloud",
+  "developerLogoUrl": "assets/Alibaba_Cloud.svg",
+  "modelIconUrl": "assets/icons/Qwen.svg",
+  "contextWindow": 262144,
+  "inputCostPer1MTokens": 0.3,
+  "outputCostPer1MTokens": 2.4,
+  "releaseDate": "2026-02-25"
+},
+{
+  "id": "qwen3.5_122b_a10b",
+  "name": "Qwen3.5-122B-A10B",
+  "developerName": "Alibaba Cloud",
+  "developerLogoUrl": "assets/Alibaba_Cloud.svg",
+  "modelIconUrl": "assets/icons/Qwen.svg",
+  "contextWindow": 262144,
+  "inputCostPer1MTokens": 0.4,
+  "outputCostPer1MTokens": 3.2,
+  "releaseDate": "2026-02-25"
+},
+{
+  "id": "qwen3.5_flash",
+  "name": "Qwen3.5-Flash",
+  "developerName": "Alibaba Cloud",
+  "developerLogoUrl": "assets/Alibaba_Cloud.svg",
+  "modelIconUrl": "assets/icons/Qwen.svg",
+  "contextWindow": 1000000,
+  "inputCostPer1MTokens": 0.1,
+  "outputCostPer1MTokens": 0.4,
+  "releaseDate": "2026-02-25"
+},
+{
+  "id": "lfm2_24b_a2b",
+  "name": "LFM2-24B-A2B",
+  "developerName": "Liquid AI",
+  "developerLogoUrl": "assets/LiquidAI.svg",
+  "contextWindow": 32768,
+  "inputCostPer1MTokens": 0.03,
+  "outputCostPer1MTokens": 0.12,
+  "releaseDate": "2026-02-25"
+},
+{
+  "id": "gemini_3.1_pro_preview_custom_tools",
+  "name": "Gemini 3.1 Pro Preview Custom Tools",
+  "developerName": "Google",
+  "developerLogoUrl": "assets/Google.svg",
+  "modelIconUrl": "assets/icons/Gemini.svg",
+  "contextWindow": 1048576,
+  "inputCostPer1MTokens": 2,
+  "outputCostPer1MTokens": 12,
+  "releaseDate": "2026-02-25"
+},
+{
+  "id": "llama_nemotron_embed_vl_1b_v2",
+  "name": "Llama Nemotron Embed VL 1B V2",
+  "developerName": "Nvidia",
+  "developerLogoUrl": "assets/Nvidia.svg",
+  "contextWindow": 313072,
+  "inputCostPer1MTokens": 0,
+  "outputCostPer1MTokens": 0,
+  "releaseDate": "2026-02-25"
+},
+{
+  "id": "gpt-3.5-codex",
+  "name": "GPT-3.5-Codex",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "modelIconUrl": "assets/icons/Codex.svg",
+  "contextWindow": 400000,
+  "inputCostPer1MTokens": 1.75,
+  "outputCostPer1MTokens": 14,
+  "releaseDate": "2026-02-24"
+},
+{
+  "id": "aion_2.0",
+  "name": "Aion-2.0",
+  "developerName": "AionLabs",
+  "developerLogoUrl": "assets/AionLabsAI.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 0.8,
+  "outputCostPer1MTokens": 1.6,
+  "releaseDate": "2026-02-23"
+},
+{
+  "id": "gemini_3.1_flash_lite_preview",
+  "name": "Gemini 3.1 Flash Lite Preview",
+  "developerName": "Google",
+  "developerLogoUrl": "assets/Google.svg",
+  "modelIconUrl": "assets/icons/Gemini.svg",
+  "contextWindow": 1048576,
+  "inputCostPer1MTokens": 0.25,
+  "outputCostPer1MTokens": 1.5,
+  "releaseDate": "2026-03-03"
+},
+{
+  "id": "gemini_3.1_pro_preview",
+  "name": "Gemini 3.1 Pro Preview",
+  "developerName": "Google",
+  "developerLogoUrl": "assets/Google.svg",
+  "modelIconUrl": "assets/icons/Gemini.svg",
+  "contextWindow": 1048576,
+  "inputCostPer1MTokens": 2,
+  "outputCostPer1MTokens": 12,
+  "releaseDate": "2026-02-19"
+},
+{
+  "id": "gpt_3.5_turbo",
+  "name": "GPT-3.5 Turbo",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 16385,
+  "inputCostPer1MTokens": 0.5,
+  "outputCostPer1MTokens": 1.5,
+  "releaseDate": "2023-05-28"
+},
+{
+  "id": "gpt_4",
+  "name": "GPT-4",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 8191,
+  "inputCostPer1MTokens": 30,
+  "outputCostPer1MTokens": 60,
+  "releaseDate": "2023-05-28"
+},
+{
+  "id": "mythomax_13b",
+  "name": "MythoMax 13B",
+  "developerName": "Huggingface",
+  "developerLogoUrl": "assets/Huggingface.svg",
+  "contextWindow": 4096,
+  "inputCostPer1MTokens": 0.06,
+  "outputCostPer1MTokens": 0.06,
+  "releaseDate": "2023-07-02"
+},
+{
+  "id": "remm_slerp_13b",
+  "name": "ReMM SLERP 13B",
+  "developerName": "Huggingface",
+  "developerLogoUrl": "assets/Huggingface.svg",
+  "contextWindow": 6144,
+  "inputCostPer1MTokens": 0.45,
+  "outputCostPer1MTokens": 0.65,
+  "releaseDate": "2023-07-22"
+},
+{
+  "id": "mancer_weaver_alpha",
+  "name": "Mancer: Weaver (alpha)",
+  "developerName": "Huggingface",
+  "developerLogoUrl": "assets/Huggingface.svg",
+  "contextWindow": 8000,
+  "inputCostPer1MTokens": 0.75,
+  "outputCostPer1MTokens": 1,
+  "releaseDate": "2023-08-02"
+},
+{
+  "id": "gpt_3.5_turbo_16k",
+  "name": "GPT-3.5 Turbo 16k",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 16385,
+  "inputCostPer1MTokens": 3,
+  "outputCostPer1MTokens": 4,
+  "releaseDate": "2023-08-28"
+},
+{
+  "id": "mistral_7b_instruct_v0.1",
+  "name": "Mistral 7B Instruct v0.1",
+  "developerName": "Mistral AI",
+  "developerLogoUrl": "assets/MistralAI.svg",
+  "contextWindow": 2824,
+  "inputCostPer1MTokens": 0.11,
+  "outputCostPer1MTokens": 0.19,
+  "releaseDate": "2023-09-28"
+},
+{
+  "id": "gpt_3.5_turbo_instruct",
+  "name": "GPT-3.5 Turbo Instruct",
+  "modelIconUrl": "",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 4095,
+  "inputCostPer1MTokens": 1.5,
+  "outputCostPer1MTokens": 2,
+  "releaseDate": "2023-09-28"
+},
+{
+  "id": "goliath_120b",
+  "name": "Goliath 120B",
+  "developerName": "Huggingface",
+  "developerLogoUrl": "assets/Huggingface.svg",
+  "contextWindow": 6144,
+  "inputCostPer1MTokens": 3.75,
+  "outputCostPer1MTokens": 7.5,
+  "releaseDate": "2023-11-10"
+},
+{
+  "id": "noromaid_20b",
+  "name": "Noromaid 20B",
+  "developerName": "Huggingface",
+  "developerLogoUrl": "assets/Huggingface.svg",
+  "contextWindow": 4096,
+  "inputCostPer1MTokens": 1.75,
+  "outputCostPer1MTokens": 1,
+  "releaseDate": "2023-11-26"
+},
+{
+  "id": "mixtral_8x7b_instruct",
+  "name": "Mixtral 8x7B Instruct",
+  "developerName": "Mistral AI",
+  "developerLogoUrl": "assets/MistralAI.svg",
+  "contextWindow": 32768,
+  "inputCostPer1MTokens": 0.54,
+  "outputCostPer1MTokens": 0.54,
+  "releaseDate": "2023-12-10"
+},
+{
+  "id": "gpt_4_turbo_preview",
+  "name": "GPT-4 Turbo Preview",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 10,
+  "outputCostPer1MTokens": 30,
+  "releaseDate": "2024-01-25"
+},
+{
+  "id": "mistral_large",
+  "name": "Mistral Large",
+  "developerName": "Mistral AI",
+  "developerLogoUrl": "assets/MistralAI.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 2,
+  "outputCostPer1MTokens": 6,
+  "releaseDate": "2024-02-26"
+},
+{
+  "id": "claude_3_haiku",
+  "name": "Claude 3 Haiku",
+  "developerName": "Anthropic",
+  "developerLogoUrl": "assets/Anthropic.svg",
+  "modelIconUrl": "assets/icons/Claude.svg",
+  "contextWindow": 200000,
+  "inputCostPer1MTokens": 0.25,
+  "outputCostPer1MTokens": 1.25,
+  "releaseDate": "2024-03-13"
+},
+{
+  "id": "gpt_5.3_instant",
+  "name": "GPT-5.3 Instant",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 1.75,
+  "outputCostPer1MTokens": 14,
+  "releaseDate": "2026-03-03"
+},
+{
+  "id": "mercury_2",
+  "name": "Mercury 2",
+  "developerName": "Inception Labs",
+  "developerLogoUrl": "assets/InceptionLabs.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 0.25,
+  "outputCostPer1MTokens": 0.75,
+  "releaseDate": "2026-03-04"
+},
+{
+  "id": "gpt_5.4_thinking",
+  "name": "GPT-5.4 Thinking",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 1050000,
+  "inputCostPer1MTokens": 2.5,
+  "outputCostPer1MTokens": 15,
+  "releaseDate": "2026-03-05"
+},
+{
+  "id": "gpt_5.4_pro",
+  "name": "GPT-5.4 Pro",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 1050000,
+  "inputCostPer1MTokens": 30,
+  "outputCostPer1MTokens": 180,
+  "releaseDate": "2026-03-05"
+},
+{
+  "id": "gpt_4_turbo",
+  "name": "GPT-4 Turbo",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 10,
+  "outputCostPer1MTokens": 30,
+  "releaseDate": "2024-04-09"
+},
+{
+  "id": "wizardlm_2_8x22b",
+  "name": "WizardLM-2 8x22B",
+  "developerName": "Microsoft",
+  "developerLogoUrl": "assets/Microsoft.svg",
+  "contextWindow": 65535,
+  "inputCostPer1MTokens": 0.62,
+  "outputCostPer1MTokens": 0.62,
+  "releaseDate": "2024-04-16"
+},
+{
+  "id": "mixtral_8x22b_instruct",
+  "name": "Mixtral 8x22B Instruct",
+  "developerName": "Mistral AI",
+  "developerLogoUrl": "assets/MistralAI.svg",
+  "contextWindow": 65536,
+  "inputCostPer1MTokens": 2,
+  "outputCostPer1MTokens": 6,
+  "releaseDate": "2024-04-17"
+},
+{
+  "id": "llama_3_8b_instruct",
+  "name": "Llama 3 8B Instruct",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 8192,
+  "inputCostPer1MTokens": 0.03,
+  "outputCostPer1MTokens": 0.04,
+  "releaseDate": "2024-04-18"
+},
+{
+  "id": "llama_3_70b_instruct",
+  "name": "Llama 3 70B Instruct",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 8129,
+  "inputCostPer1MTokens": 0.51,
+  "outputCostPer1MTokens": 0.74,
+  "releaseDate": "2024-04-18"
+},
+{
+  "id": "gpt_4o",
+  "name": "GPT-4o",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 2.5,
+  "outputCostPer1MTokens": 10,
+  "releaseDate": "2024-05-13"
+},
+{
+  "id": "gpt_4o_extended",
+  "name": "GPT-4o (extended)",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 6,
+  "outputCostPer1MTokens": 18,
+  "releaseDate": "2024-05-13"
+},
+{
+  "id": "llamaguard_2_8b",
+  "name": "LlamaGuard 2 8B",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 8192,
+  "inputCostPer1MTokens": 0.2,
+  "outputCostPer1MTokens": 0.2,
+  "releaseDate": "2024-05-13"
+},
+{
+  "id": "hermes_2_pro_llama_3_8b",
+  "name": "Hermes 2 Pro - Llama-3 8B",
+  "developerName": "Nous Research",
+  "developerLogoUrl": "assets/NousResearch.svg",
+  "contextWindow": 8192,
+  "inputCostPer1MTokens": 0.14,
+  "outputCostPer1MTokens": 0.14,
+  "releaseDate": "2024-05-27"
+},
+{
+  "id": "gemma_2_9b",
+  "name": "Gemma 2 9B",
+  "developerName": "Google",
+  "developerLogoUrl": "assets/Google.svg",
+  "modelIconUrl": "assets/icons/Gemma.svg",
+  "contextWindow": 8192,
+  "inputCostPer1MTokens": 0.03,
+  "outputCostPer1MTokens": 0.09,
+  "releaseDate": "2024-06-28"
+},
+{
+  "id": "gemma_2_27b",
+  "name": "Gemma 2 27B",
+  "developerName": "Google",
+  "developerLogoUrl": "assets/Google.svg",
+  "modelIconUrl": "assets/icons/Gemma.svg",
+  "contextWindow": 8192,
+  "inputCostPer1MTokens": 0.65,
+  "outputCostPer1MTokens": 0.65,
+  "releaseDate": "2024-07-13"
+},
+{
+  "id": "gpt_4o_mini",
+  "name": "GPT-4o-mini",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 0.15,
+  "outputCostPer1MTokens": 0.6,
+  "releaseDate": "2024-07-18"
+},
+{
+  "id": "mistral_nemo",
+  "name": "Mistral Nemo",
+  "developerName": "Mistral AI",
+  "developerLogoUrl": "assets/MistralAI.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 0.02,
+  "outputCostPer1MTokens": 0.04,
+  "releaseDate": "2024-07-19"
+},
+{
+  "id": "llama_3.1_70b_instruct",
+  "name": "Llama 3.1 70B Instruct",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 0.4,
+  "outputCostPer1MTokens": 0.4,
+  "releaseDate": "2024-07-23"
+},
+{
+  "id": "llama_3.1_405b_instruct",
+  "name": "Llama 3.1 405B Instruct",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 131000,
+  "inputCostPer1MTokens": 4,
+  "outputCostPer1MTokens": 4,
+  "releaseDate": "2024-07-23"
+},
+{
+  "id": "llama_3.1_8b_instruct",
+  "name": "Llama 3.1 8B Instruct",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 16384,
+  "inputCostPer1MTokens": 0.02,
+  "outputCostPer1MTokens": 0.05,
+  "releaseDate": "2024-07-23"
+},
+{
+  "id": "hermes_3_405b_instruct",
+  "name": "Hermes 3 405B Instruct",
+  "developerName": "Nous Research",
+  "developerLogoUrl": "assets/NousResearch.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 1,
+  "outputCostPer1MTokens": 1,
+  "releaseDate": "2024-08-16"
+},
+{
+  "id": "hermes_3_70b_instruct",
+  "name": "Hermes 3 70B Instruct",
+  "developerName": "Nous Research",
+  "developerLogoUrl": "assets/NousResearch.svg",
+  "contextWindow": 65536,
+  "inputCostPer1MTokens": 0.3,
+  "outputCostPer1MTokens": 0.3,
+  "releaseDate": "2024-08-18"
+},
+{
+  "id": "qwen2.5_vl_7b_instruct",
+  "name": "Qwen2.5-VL 7B Instruct",
+  "developerName": "Alibaba Cloud",
+  "developerLogoUrl": "assets/Alibaba_Cloud.svg",
+  "modelIconUrl": "assets/icons/Qwen.svg",
+  "contextWindow": 32768,
+  "inputCostPer1MTokens": 0.2,
+  "outputCostPer1MTokens": 0.2,
+  "releaseDate": "2024-08-28"
+},
+{
+  "id": "command_r+",
+  "name": "Command R+",
+  "developerName": "Cohere",
+  "developerLogoUrl": "assets/Cohere.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 2.5,
+  "outputCostPer1MTokens": 10,
+  "releaseDate": "2024-08-30"
+},
+{
+  "id": "comamnd_r",
+  "name": "Command R",
+  "developerName": "Cohere",
+  "developerLogoUrl": "assets/Cohere.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 0.15,
+  "outputCostPer1MTokens": 0.6,
+  "releaseDate": "2024-08-30"
+},
+{
+  "id": "qwen2.5_72b_instruct",
+  "name": "Qwen2.5 72B Instruct",
+  "developerName": "Alibaba Cloud",
+  "developerLogoUrl": "assets/Alibaba_Cloud.svg",
+  "modelIconUrl": "assets/icons/Qwen.svg",
+  "contextWindow": 32768,
+  "inputCostPer1MTokens": 0.12,
+  "outputCostPer1MTokens": 0.39,
+  "releaseDate": "2024-09-19"
+},
+{
+  "id": "llama_3.2_11b_vision_instruct",
+  "name": "Llama 3.2 11B Vision Instruct",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 0.049,
+  "outputCostPer1MTokens": 0.049,
+  "releaseDate": "2024-09-25"
+},
+{
+  "id": "llama_3.2_1b_instruct",
+  "name": "Llama 3.2 1B Instruct",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 60000,
+  "inputCostPer1MTokens": 0.027,
+  "outputCostPer1MTokens": 0.2,
+  "releaseDate": "2024-09-25"
+},
+{
+  "id": "llama_3.2_3b_instruct",
+  "name": "Llama 3.2 3B Instruct",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 80000,
+  "inputCostPer1MTokens": 0.051,
+  "outputCostPer1MTokens": 0.34,
+  "releaseDate": "2024-09-25"
+},
+{
+  "id": "inflection_3_productivity",
+  "name": "Inflection 3 Productivity",
+  "developerName": "Inflection",
+  "developerLogoUrl": "assets/Inflection.svg",
+  "contextWindow": 8000,
+  "inputCostPer1MTokens": 2.5,
+  "outputCostPer1MTokens": 10,
+  "releaseDate": "2024-10-11"
+},
+{
+  "id": "inflection_3_pi",
+  "name": "Inflection 3 Pi",
+  "developerName": "Inflection",
+  "developerLogoUrl": "assets/Inflection.svg",
+  "contextWindow": 8000,
+  "inputCostPer1MTokens": 2.5,
+  "outputCostPer1MTokens": 10,
+  "releaseDate": "2024-10-11"
+},
+{
+  "id": "llama_nemotron_70b_instruct",
+  "name": "Llama Nemotron 70B Instruct",
+  "developerName": "Nvidia",
+  "developerLogoUrl": "assets/Nvidia.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 1.2,
+  "outputCostPer1MTokens": 1.2,
+  "releaseDate": "2024-10-15"
+},
+{
+  "id": "qwen_2.5_7b_instruct",
+  "name": "Qwen2.5 7B Instruct",
+  "developerName": "Alibaba Cloud",
+  "developerLogoUrl": "assets/Alibaba_Cloud.svg",
+  "modelIconUrl": "assets/icons/Qwen.svg",
+  "contextWindow": 32768,
+  "inputCostPer1MTokens": 0.04,
+  "outputCostPer1MTokens": 0.1,
+  "releaseDate": "2024-10-16"
+},
+{
+  "id": "claude_3.5_sonnet",
+  "name": "Claude 3.5 Sonnet",
+  "developerName": "Anthropic",
+  "developerLogoUrl": "assets/Anthropic.svg",
+  "modelIconUrl": "assets/icons/Claude.svg",
+  "contextWindow": 200000,
+  "inputCostPer1MTokens": 6,
+  "outputCostPer1MTokens": 30,
+  "releaseDate": "2024-10-22"
+},
+{
+  "id": "claude_3.5_haiku",
+  "name": "Claude 3.5 Haiku",
+  "developerName": "Anthropic",
+  "developerLogoUrl": "assets/Anthropic.svg",
+  "modelIconUrl": "assets/icons/Claude.svg",
+  "contextWindow": 200000,
+  "inputCostPer1MTokens": 0.8,
+  "outputCostPer1MTokens": 4,
+  "releaseDate": "2024-11-04"
+},
+{
+  "id": "qwen2.5_coder_32b_instruct",
+  "name": "Qwen2.5 Coder 32B Instruct",
+  "developerName": "Alibaba Cloud",
+  "developerLogoUrl": "assets/Alibaba_Cloud.svg",
+  "modelIconUrl": "assets/icons/Qwen.svg",
+  "contextWindow": 32768,
+  "inputCostPer1MTokens": 0.2,
+  "outputCostPer1MTokens": 0.2,
+  "releaseDate": "2024-11-12"
+},
+{
+  "id": "pixtral_large_2411",
+  "name": "Pixtral Large 2411",
+  "developerName": "Mistral AI",
+  "developerLogoUrl": "assets/MistralAI.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 2,
+  "outputCostPer1MTokens": 6,
+  "releaseDate": "2026-11-19"
+},
+{
+  "id": "mistral_large_2407",
+  "name": "Mistral Large 2407",
+  "developerName": "Mistral AI",
+  "developerLogoUrl": "assets/MistralAI.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 2,
+  "outputCostPer1MTokens": 6,
+  "releaseDate": "2024-11-19"
+},
+{
+  "id": "mistral_large_2411",
+  "name": "Mistral Large 2411",
+  "developerName": "Mistral AI",
+  "developerLogoUrl": "assets/MistralAI.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 2,
+  "outputCostPer1MTokens": 6,
+  "releaseDate": "2024-11-19"
+},
+{
+  "id": "nova_pro_1.0",
+  "name": "Nova Pro 1.0",
+  "developerName": "Amazon Web Services",
+  "developerLogoUrl": "assets/AWS.svg",
+  "modelIconUrl": "assets/icons/Nova.svg",
+  "contextWindow": 300000,
+  "inputCostPer1MTokens": 0.8,
+  "outputCostPer1MTokens": 3.2,
+  "releaseDate": "2024-12-05"
+},
+{
+  "id": "nova_micro_1.0",
+  "name": "Nova Micro 1.0",
+  "developerName": "Amazon Web Services",
+  "developerLogoUrl": "assets/AWS.svg",
+  "modelIconUrl": "assets/icons/Nova.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 0.035,
+  "outputCostPer1MTokens": 0.14,
+  "releaseDate": "2024-12-05"
+},
+{
+  "id": "nova_lite_1.0",
+  "name": "Nova Lite 1.0",
+  "developerName": "Amazon Web Services",
+  "developerLogoUrl": "assets/AWS.svg",
+  "modelIconUrl": "assets/icons/Nova.svg",
+  "contextWindow": 300000,
+  "inputCostPer1MTokens": 0.06,
+  "outputCostPer1MTokens": 0.24,
+  "releaseDate": "2024-12-05"
+},
+{
+  "id": "llama_3.3_70b_instruct",
+  "name": "Llama 3.3 70B Instruct",
+  "developerName": "Meta",
+  "developerLogoUrl": "assets/Meta.svg",
+  "contextWindow": 131072,
+  "inputCostPer1MTokens": 0.1,
+  "outputCostPer1MTokens": 0.32,
+  "releaseDate": "2024-12-06"
+},
+{
+  "id": "command_r7b",
+  "name": "Command R7B",
+  "developerName": "Cohere",
+  "developerLogoUrl": "assets/Cohere.svg",
+  "contextWindow": 128000,
+  "inputCostPer1MTokens": 0.0375,
+  "outputCostPer1MTokens": 0.15,
+  "releaseDate": "2024-12-14"
+},
+{
+  "id": "o1",
+  "name": "o1",
+  "developerName": "OpenAI",
+  "developerLogoUrl": "assets/OpenAI.svg",
+  "contextWindow": 200000,
+  "inputCostPer1MTokens": 15,
+  "outputCostPer1MTokens": 60,
+  "releaseDate": "2024-12-17"
+}
+]
