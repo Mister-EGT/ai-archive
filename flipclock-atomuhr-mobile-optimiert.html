@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FlipClock Atomzeit</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
     :root {
       --bg: #0d1117;
-      --panel: #111827;
-      --panel-2: #0f172a;
       --card: #171f2d;
       --card-top: #243044;
       --card-bottom: #101826;
@@ -16,56 +16,56 @@
       --text: #f8fafc;
       --muted: #9fb0c8;
       --accent: #7dd3fc;
-      --shadow: rgba(0, 0, 0, 0.45);
-      --digit-width: clamp(44px, calc((100vw - 9.5rem) / 6), 150px);
-      --digit-height: clamp(58px, calc(var(--digit-width) * 1.27), 190px);
-      --digit-font: clamp(2rem, calc(var(--digit-width) * 0.82), 6rem);
+      --accent-green: #34d399;
+      --accent-red: #fca5a5;
+      --digit-width: clamp(48px, calc((100vw - 10rem) / 6), 160px);
+      --digit-height: clamp(64px, calc(var(--digit-width) * 1.3), 208px);
+      --digit-font: clamp(2.2rem, calc(var(--digit-width) * 0.75), 6.5rem);
       --radius: clamp(10px, 2vw, 18px);
-      --flip-speed: 620ms;
-      --clock-gap: clamp(6px, 1.6vw, 18px);
+      --clock-gap: clamp(8px, 1.8vw, 20px);
       --group-gap: clamp(4px, 1vw, 10px);
-      --label-size: clamp(0.66rem, 1.4vw, 0.82rem);
-      --app-padding-x: clamp(12px, 2.6vw, 22px);
-      --app-padding-y: clamp(16px, 3vw, 28px);
+      --label-size: clamp(0.62rem, 1.3vw, 0.8rem);
+      --app-px: clamp(14px, 2.8vw, 28px);
+      --app-py: clamp(18px, 3vw, 30px);
+      --transition-digit: 0.45s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
-      margin: 0;
       min-height: 100%;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at top, rgba(125,211,252,0.08), transparent 30%),
-        linear-gradient(180deg, #0b1020 0%, #090d14 100%);
+        radial-gradient(ellipse at top center, rgba(125,211,252,0.07), transparent 50%),
+        linear-gradient(180deg, #0b1020, #090d14);
     }
 
     body {
       display: grid;
       place-items: center;
-      padding: clamp(10px, 2.8vw, 28px);
+      padding: clamp(10px, 3vw, 32px);
     }
 
+    /* ── App Shell ── */
     .app {
       width: min(1100px, 100%);
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: clamp(18px, 3vw, 28px);
-      box-shadow:
-        0 24px 70px rgba(0,0,0,0.45),
-        inset 0 1px 0 rgba(255,255,255,0.05);
-      padding: var(--app-padding-y) var(--app-padding-x) calc(var(--app-padding-y) - 6px);
-      backdrop-filter: blur(10px);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+      padding: var(--app-py) var(--app-px) calc(var(--app-py) - 4px);
+      backdrop-filter: blur(12px);
       overflow: hidden;
     }
 
+    /* ── Topbar ── */
     .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 14px;
-      margin-bottom: clamp(14px, 3vw, 22px);
+      margin-bottom: clamp(16px, 3vw, 24px);
       flex-wrap: wrap;
     }
 
@@ -81,185 +81,187 @@
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 14px;
+      padding: 10px 16px;
       border-radius: 999px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
       color: var(--muted);
-      font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+      font-size: clamp(0.82rem, 1.6vw, 0.92rem);
       max-width: 100%;
-      min-width: min(100%, 270px);
-      transition: border-color 0.3s;
-    }
-
-    .status.error {
-      border-color: rgba(252,165,165,0.4);
-    }
-
-    .status.error .status-dot {
-      background: #fca5a5;
-      box-shadow: 0 0 12px rgba(252,165,165,0.8);
-    }
-
-    .status.synced .status-dot {
-      background: #34d399;
-      box-shadow: 0 0 12px rgba(52,211,153,0.8);
+      min-width: min(100%, 280px);
+      transition: border-color 0.4s, color 0.4s;
     }
 
     .status-dot {
-      width: 10px;
-      height: 10px;
+      width: 10px; height: 10px;
       border-radius: 50%;
       background: #67e8f9;
-      box-shadow: 0 0 12px rgba(103,232,249,0.8);
+      box-shadow: 0 0 12px rgba(103,232,249,0.7);
       flex: 0 0 auto;
-      transition: background 0.3s, box-shadow 0.3s;
+      transition: background 0.4s, box-shadow 0.4s;
     }
 
-    #statusText {
-      min-width: 0;
-      overflow-wrap: anywhere;
+    .status.synced { border-color: rgba(52,211,153,0.3); }
+    .status.synced .status-dot { background: var(--accent-green); box-shadow: 0 0 14px rgba(52,211,153,0.8); }
+    .status.error  { border-color: rgba(252,165,165,0.3); color: var(--accent-red); }
+    .status.error  .status-dot { background: var(--accent-red); box-shadow: 0 0 14px rgba(252,165,165,0.8); }
+    .status.syncing .status-dot { animation: pulse-dot 1s ease-in-out infinite; }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.4; transform: scale(0.7); }
     }
 
-    .clock-wrap {
-      width: 100%;
-      overflow: hidden;
-      padding-bottom: 4px;
-    }
+    #statusText { min-width: 0; overflow-wrap: anywhere; }
 
-    .clock {
+    /* ── API-Auswahl ── */
+    .api-bar {
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
+      margin-bottom: clamp(14px, 2.5vw, 22px);
+      flex-wrap: wrap;
+    }
+
+    .api-bar-label {
+      font-size: clamp(0.72rem, 1.3vw, 0.82rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+
+    .api-btn {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: clamp(0.72rem, 1.3vw, 0.82rem);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .api-btn:hover {
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+
+    .api-btn.active {
+      background: rgba(125,211,252,0.15);
+      border-color: rgba(125,211,252,0.4);
+      color: var(--accent);
+      box-shadow: 0 0 16px rgba(125,211,252,0.15);
+    }
+
+    /* ── Uhr ── */
+    .clock-wrap { width: 100%; overflow: hidden; }
+
+    .clock {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
       gap: var(--clock-gap);
-      padding: 6px 0 10px;
-      width: 100%;
-      min-width: 0;
+      padding: 8px 0 12px;
     }
 
     .time-group {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: var(--group-gap);
-      min-width: 0;
     }
 
-    .separator {
-      font-size: clamp(1.5rem, 5vw, 5rem);
-      font-weight: 800;
-      line-height: 1;
-      color: rgba(255,255,255,0.75);
-      text-shadow: 0 4px 14px rgba(0,0,0,0.45);
-      transform: translateY(-4px);
-      user-select: none;
-      flex: 0 0 auto;
-      transition: opacity 0.25s ease;
-    }
-
-    .separator.blink-off {
-      opacity: 0.2;
-    }
-
-    .digit-stack {
+    .digit-col {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: clamp(6px, 1vw, 10px);
-      min-width: 0;
     }
 
-    .label {
+    .digit-label {
       font-size: var(--label-size);
       font-weight: 700;
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
       text-align: center;
-      min-height: 1em;
+      height: 1.1em;
+      line-height: 1.1;
     }
 
-    .flip-card {
+    /* ── Ziffern-Karte (statisch, kein Flip) ── */
+    .digit-card {
       position: relative;
       width: var(--digit-width);
       height: var(--digit-height);
-      perspective: 1200px;
-      filter: drop-shadow(0 18px 18px rgba(0,0,0,0.28));
+      border-radius: var(--radius);
+      overflow: hidden;
+      filter: drop-shadow(0 14px 24px rgba(0,0,0,0.35));
       flex: 0 0 auto;
     }
 
-    .flip-card::before {
+    .digit-card::before {
       content: "";
       position: absolute;
       inset: 0;
       border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), transparent);
       pointer-events: none;
-      z-index: 5;
+      z-index: 4;
     }
 
-    .flip-top,
-    .flip-bottom,
-    .flip-top-flip,
-    .flip-bottom-flip {
+    .digit-top, .digit-bottom {
       position: absolute;
-      left: 0;
-      width: 100%;
-      overflow: hidden;
+      left: 0; width: 100%;
       display: flex;
       justify-content: center;
-      align-items: center;
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum" 1;
       font-weight: 800;
-      color: var(--text);
-      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      border: 1px solid var(--line);
-      background: linear-gradient(180deg, var(--card-top), var(--card));
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
-      backface-visibility: hidden;
-      border-radius: var(--radius);
       font-size: var(--digit-font);
-      line-height: 1.1;
+      color: var(--text);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      border: 1px solid var(--line);
+      overflow: hidden;
+      transition: none;
     }
 
-    .flip-top,
-    .flip-top-flip {
-      top: 0;
-      height: 50%;
+    .digit-top {
+      top: 0; height: 50%;
       align-items: flex-end;
-      padding-bottom: calc(var(--digit-height) * 0.06);
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-      clip-path: inset(0 0 0 0 round var(--radius) var(--radius) 0 0);
+      padding-bottom: calc(var(--digit-height) * 0.04);
+      background: linear-gradient(180deg, var(--card-top), var(--card));
+      border-radius: var(--radius) var(--radius) 0 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
     }
 
-    .flip-bottom,
-    .flip-bottom-flip {
-      bottom: 0;
-      height: 50%;
+    .digit-bottom {
+      bottom: 0; height: 50%;
       align-items: flex-start;
-      padding-top: calc(var(--digit-height) * 0.06);
+      padding-top: calc(var(--digit-height) * 0.04);
       background: linear-gradient(180deg, #172031, var(--card-bottom));
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
-      clip-path: inset(0 0 0 0 round 0 0 var(--radius) var(--radius));
+      border-radius: 0 0 var(--radius) var(--radius);
     }
 
-    .flip-card::after {
+    /* Mittellinie */
+    .digit-card::after {
       content: "";
       position: absolute;
-      left: 0;
-      right: 0;
-      top: 50%;
+      left: 0; right: 0; top: 50%;
       height: 2px;
       background: rgba(0,0,0,0.55);
       box-shadow: 0 1px 0 rgba(255,255,255,0.06);
       transform: translateY(-1px);
-      z-index: 6;
+      z-index: 5;
     }
 
-    .hinge,
-    .hinge-right {
+    /* Scharniere */
+    .hinge, .hinge-r {
       position: absolute;
       top: 50%;
       width: clamp(6px, 1vw, 10px);
@@ -267,116 +269,100 @@
       border-radius: 50%;
       background: rgba(0,0,0,0.55);
       border: 1px solid rgba(255,255,255,0.08);
-      z-index: 7;
+      z-index: 6;
       transform: translateY(-50%);
       box-shadow: inset 0 1px 1px rgba(255,255,255,0.08);
     }
+    .hinge   { left:  clamp(4px, 0.7vw, 8px); }
+    .hinge-r { right: clamp(4px, 0.7vw, 8px); }
 
-    .hinge { left: clamp(4px, 0.7vw, 8px); }
-    .hinge-right { right: clamp(4px, 0.7vw, 8px); }
-
-    /* ── Flip-Animation ── */
-    .flip-top-flip {
-      z-index: 4;
-      transform-origin: bottom center;
-      transform: rotateX(0deg);
+    /* Ziffern-Wechsel-Animation */
+    .digit-card.changing .digit-top,
+    .digit-card.changing .digit-bottom {
+      animation: digit-pop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
 
-    .flip-bottom-flip {
-      z-index: 3;
-      transform-origin: top center;
-      transform: rotateX(90deg);
+    @keyframes digit-pop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.08); }
+      100% { transform: scale(1); }
     }
 
-    .flip-card.animating .flip-top-flip {
-      animation: flipTop var(--flip-speed) cubic-bezier(.37,.01,.2,1) forwards;
+    /* Separator */
+    .separator {
+      font-size: clamp(1.6rem, 5vw, 5.2rem);
+      font-weight: 800;
+      line-height: 1;
+      color: rgba(255,255,255,0.7);
+      text-shadow: 0 4px 14px rgba(0,0,0,0.45);
+      user-select: none;
+      flex: 0 0 auto;
+      margin-top: calc(var(--label-size) + clamp(6px, 1vw, 10px) + var(--digit-height) * 0.28);
+      transition: opacity 0.3s ease;
     }
 
-    .flip-card.animating .flip-bottom-flip {
-      animation: flipBottom var(--flip-speed) cubic-bezier(.21,.61,.35,1) forwards;
-      animation-delay: calc(var(--flip-speed) * 0.45);
-    }
+    .separator.dim { opacity: 0.18; }
 
-    @keyframes flipTop {
-      0%   { transform: rotateX(0deg); }
-      100% { transform: rotateX(-90deg); }
-    }
-
-    @keyframes flipBottom {
-      0%   { transform: rotateX(90deg); }
-      100% { transform: rotateX(0deg); }
-    }
-
+    /* ── Meta ── */
     .meta {
-      margin-top: 12px;
+      margin-top: 14px;
       display: grid;
-      gap: 12px;
-      justify-items: stretch;
+      gap: 10px;
+      justify-items: center;
       text-align: center;
     }
 
-    .ms-row {
+    .meta-row {
       display: inline-flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 18px;
+      padding: 11px 18px;
       border-radius: 14px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
-      min-width: 0;
-      width: min(100%, 420px);
+      width: min(100%, 440px);
       justify-content: center;
       flex-wrap: wrap;
-      justify-self: center;
     }
 
     .meta-label {
-      font-size: clamp(0.72rem, 1.4vw, 0.82rem);
+      font-size: clamp(0.7rem, 1.3vw, 0.8rem);
       text-transform: uppercase;
       letter-spacing: 0.14em;
       color: var(--muted);
       font-weight: 700;
     }
 
-    .ms-value,
-    .date-value,
-    .zone-value {
+    .meta-val {
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum" 1;
-      min-width: 0;
       overflow-wrap: anywhere;
     }
 
-    .ms-value {
+    .ms-val {
       font-size: clamp(1.15rem, 3vw, 1.9rem);
       font-weight: 800;
       color: var(--accent);
     }
 
-    .date-value,
-    .zone-value {
-      font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+    .date-val, .zone-val {
+      font-size: clamp(0.92rem, 2vw, 1.15rem);
       font-weight: 600;
     }
 
+    /* ── Footer ── */
     .footer {
       margin-top: 18px;
       text-align: center;
       color: var(--muted);
-      font-size: clamp(0.78rem, 1.8vw, 0.9rem);
-      line-height: 1.55;
-      overflow-wrap: anywhere;
+      font-size: clamp(0.76rem, 1.6vw, 0.88rem);
+      line-height: 1.6;
     }
 
-    .footer a {
-      color: var(--accent);
-      text-decoration: none;
-    }
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
 
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
+    /* ── Responsive ── */
     @media (max-width: 860px) {
       .topbar { justify-content: center; text-align: center; }
       .status { justify-content: center; }
@@ -384,7 +370,7 @@
 
     @media (max-width: 560px) {
       :root {
-        --digit-width: clamp(42px, calc((100vw - 6.2rem) / 6), 64px);
+        --digit-width: clamp(42px, calc((100vw - 6.5rem) / 6), 64px);
         --clock-gap: 6px;
         --group-gap: 3px;
       }
@@ -393,425 +379,388 @@
       .topbar { gap: 10px; }
       .title, .status { width: 100%; }
       .status { min-width: 0; border-radius: 16px; }
-      .label { letter-spacing: 0.08em; }
-      .separator { transform: translateY(-2px); }
-      .ms-row { width: 100%; padding: 12px 14px; }
+      .api-bar { gap: 5px; }
+      .api-btn { padding: 6px 10px; font-size: 0.7rem; }
+      .meta-row { width: 100%; padding: 10px 12px; }
     }
 
     @media (max-width: 400px) {
       :root {
-        --digit-width: clamp(38px, calc((100vw - 5.6rem) / 6), 54px);
-        --label-size: 0.6rem;
+        --digit-width: clamp(36px, calc((100vw - 5.4rem) / 6), 52px);
+        --label-size: 0.58rem;
       }
-      .separator { font-size: 1.35rem; }
-      .hinge, .hinge-right { display: none; }
+      .separator { font-size: 1.3rem; }
+      .hinge, .hinge-r { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .flip-card.animating .flip-top-flip,
-      .flip-card.animating .flip-bottom-flip {
-        animation: none !important;
-      }
+      .digit-card.changing .digit-top,
+      .digit-card.changing .digit-bottom { animation: none !important; }
     }
   </style>
 </head>
 <body>
   <main class="app">
-    <div class="topbar">
+
+    <!-- Topbar -->
+    <header class="topbar">
       <div class="title">FlipClock Atomzeit</div>
       <div class="status" id="status">
         <span class="status-dot"></span>
-        <span id="statusText">Synchronisiere Zeitquelle…</span>
+        <span id="statusText">Initialisiere…</span>
       </div>
-    </div>
+    </header>
 
+    <!-- API-Auswahl -->
+    <nav class="api-bar" id="apiBar" aria-label="Zeitquellen-Auswahl">
+      <span class="api-bar-label">Quelle:</span>
+    </nav>
+
+    <!-- Uhr -->
     <div class="clock-wrap">
-      <section class="clock" aria-label="Digitale FlipClock">
+      <section class="clock" aria-label="Digitale Uhr">
+
         <div class="time-group">
-          <div class="digit-stack">
-            <div class="label">Stunden</div>
-            <div class="flip-card" data-unit="h1">
-              <div class="hinge"></div><div class="hinge-right"></div>
-              <div class="flip-top">0</div>
-              <div class="flip-bottom">0</div>
-              <div class="flip-top-flip">0</div>
-              <div class="flip-bottom-flip">0</div>
+          <div class="digit-col">
+            <span class="digit-label">Stunden</span>
+            <div class="digit-card" id="h1">
+              <div class="hinge"></div><div class="hinge-r"></div>
+              <div class="digit-top">0</div>
+              <div class="digit-bottom">0</div>
             </div>
           </div>
-          <div class="digit-stack">
-            <div class="label">&nbsp;</div>
-            <div class="flip-card" data-unit="h2">
-              <div class="hinge"></div><div class="hinge-right"></div>
-              <div class="flip-top">0</div>
-              <div class="flip-bottom">0</div>
-              <div class="flip-top-flip">0</div>
-              <div class="flip-bottom-flip">0</div>
+          <div class="digit-col">
+            <span class="digit-label">&nbsp;</span>
+            <div class="digit-card" id="h2">
+              <div class="hinge"></div><div class="hinge-r"></div>
+              <div class="digit-top">0</div>
+              <div class="digit-bottom">0</div>
             </div>
           </div>
         </div>
 
-        <div class="separator" aria-hidden="true">:</div>
+        <span class="separator" aria-hidden="true">:</span>
 
         <div class="time-group">
-          <div class="digit-stack">
-            <div class="label">Minuten</div>
-            <div class="flip-card" data-unit="m1">
-              <div class="hinge"></div><div class="hinge-right"></div>
-              <div class="flip-top">0</div>
-              <div class="flip-bottom">0</div>
-              <div class="flip-top-flip">0</div>
-              <div class="flip-bottom-flip">0</div>
+          <div class="digit-col">
+            <span class="digit-label">Minuten</span>
+            <div class="digit-card" id="m1">
+              <div class="hinge"></div><div class="hinge-r"></div>
+              <div class="digit-top">0</div>
+              <div class="digit-bottom">0</div>
             </div>
           </div>
-          <div class="digit-stack">
-            <div class="label">&nbsp;</div>
-            <div class="flip-card" data-unit="m2">
-              <div class="hinge"></div><div class="hinge-right"></div>
-              <div class="flip-top">0</div>
-              <div class="flip-bottom">0</div>
-              <div class="flip-top-flip">0</div>
-              <div class="flip-bottom-flip">0</div>
+          <div class="digit-col">
+            <span class="digit-label">&nbsp;</span>
+            <div class="digit-card" id="m2">
+              <div class="hinge"></div><div class="hinge-r"></div>
+              <div class="digit-top">0</div>
+              <div class="digit-bottom">0</div>
             </div>
           </div>
         </div>
 
-        <div class="separator" aria-hidden="true">:</div>
+        <span class="separator" aria-hidden="true">:</span>
 
         <div class="time-group">
-          <div class="digit-stack">
-            <div class="label">Sekunden</div>
-            <div class="flip-card" data-unit="s1">
-              <div class="hinge"></div><div class="hinge-right"></div>
-              <div class="flip-top">0</div>
-              <div class="flip-bottom">0</div>
-              <div class="flip-top-flip">0</div>
-              <div class="flip-bottom-flip">0</div>
+          <div class="digit-col">
+            <span class="digit-label">Sekunden</span>
+            <div class="digit-card" id="s1">
+              <div class="hinge"></div><div class="hinge-r"></div>
+              <div class="digit-top">0</div>
+              <div class="digit-bottom">0</div>
             </div>
           </div>
-          <div class="digit-stack">
-            <div class="label">&nbsp;</div>
-            <div class="flip-card" data-unit="s2">
-              <div class="hinge"></div><div class="hinge-right"></div>
-              <div class="flip-top">0</div>
-              <div class="flip-bottom">0</div>
-              <div class="flip-top-flip">0</div>
-              <div class="flip-bottom-flip">0</div>
+          <div class="digit-col">
+            <span class="digit-label">&nbsp;</span>
+            <div class="digit-card" id="s2">
+              <div class="hinge"></div><div class="hinge-r"></div>
+              <div class="digit-top">0</div>
+              <div class="digit-bottom">0</div>
             </div>
           </div>
         </div>
+
       </section>
     </div>
 
-    <section class="meta" aria-label="Zusätzliche Zeitinfos">
-      <div class="ms-row">
+    <!-- Meta -->
+    <section class="meta" aria-label="Zeitdetails">
+      <div class="meta-row">
         <span class="meta-label">Millisekunden</span>
-        <span class="ms-value" id="milliseconds">000</span>
+        <span class="meta-val ms-val" id="msVal">000</span>
       </div>
-      <div class="ms-row">
+      <div class="meta-row">
         <span class="meta-label">Datum</span>
-        <span class="date-value" id="dateText">Lade Datum…</span>
+        <span class="meta-val date-val" id="dateVal">Lade…</span>
       </div>
-      <div class="ms-row">
+      <div class="meta-row">
         <span class="meta-label">Zeitzone</span>
-        <span class="zone-value" id="zoneText">Ermittle Zeitzone…</span>
+        <span class="meta-val zone-val" id="zoneVal">—</span>
       </div>
     </section>
 
-    <div class="footer">
+    <footer class="footer">
       Zeit wird per API synchronisiert und dazwischen lokal interpoliert.<br>
-      Datenquelle: <a href="https://worldtimeapi.org" target="_blank" rel="noopener noreferrer">WorldTimeAPI</a>
-    </div>
+      Wähle oben deine bevorzugte Zeitquelle.
+    </footer>
   </main>
 
   <script>
-    /* ════════════════════════════════════════════
-       Konfiguration
-       ════════════════════════════════════════════ */
-    const TIMEZONE    = 'Europe/Berlin';
-    const API_PRIMARY = `https://worldtimeapi.org/api/timezone/${TIMEZONE}`;
-    const API_BACKUP  = `https://timeapi.io/api/time/current/zone?timeZone=${TIMEZONE}`;
-    const SYNC_INTERVAL_MS  = 60_000;      // Re-Sync alle 60 s
-    const RENDER_INTERVAL   = 50;          // ms zwischen Frames
+    /* ═══════════════════════════════════════════════
+       Konfiguration – API-Quellen
+       ═══════════════════════════════════════════════ */
+    const TIMEZONE = 'Europe/Berlin';
 
-    /* ════════════════════════════════════════════
-       DOM-Referenzen
-       ════════════════════════════════════════════ */
-    const $status      = document.getElementById('status');
-    const $statusText  = document.getElementById('statusText');
-    const $dateText    = document.getElementById('dateText');
-    const $zoneText    = document.getElementById('zoneText');
-    const $ms          = document.getElementById('milliseconds');
-    const $separators  = document.querySelectorAll('.separator');
+    const API_SOURCES = [
+      {
+        id: 'worldtimeapi',
+        name: 'WorldTimeAPI',
+        url: `https://worldtimeapi.org/api/timezone/${TIMEZONE}`,
+        parse(data) {
+          if (!data.datetime) throw new Error('Kein datetime');
+          return { ms: new Date(data.datetime).getTime(), tz: data.timezone || TIMEZONE };
+        }
+      },
+      {
+        id: 'timeapi',
+        name: 'TimeAPI.io',
+        url: `https://timeapi.io/api/time/current/zone?timeZone=${TIMEZONE}`,
+        parse(data) {
+          if (!data.dateTime) throw new Error('Kein dateTime');
+          // dateTime: "2025-01-15T14:30:45.123"  (ohne Offset)
+          // Wir nutzen die Felder direkt:
+          const d = new Date(`${data.dateTime}Z`);
+          // Da kein Offset geliefert wird, korrigieren wir über data.currentUtcOffset
+          // Format: "+01:00:00" oder "+02:00:00"
+          if (data.currentUtcOffset) {
+            const m = data.currentUtcOffset.match(/([+-])(\d{2}):(\d{2})/);
+            if (m) {
+              const offMin = (parseInt(m[2]) * 60 + parseInt(m[3])) * (m[1] === '+' ? 1 : -1);
+              d.setTime(d.getTime() - offMin * 60000);
+            }
+          }
+          return { ms: d.getTime(), tz: data.timeZone || TIMEZONE };
+        }
+      },
+      {
+        id: 'open-meteo',
+        name: 'Open-Meteo',
+        url: `https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m&timezone=${TIMEZONE}&forecast_days=1`,
+        parse(data) {
+          // Open-Meteo liefert current.time = "2025-01-15T14:30" im angefragten TZ
+          if (!data.current || !data.current.time) throw new Error('Kein current.time');
+          const utcOff = data.utc_offset_seconds || 3600;
+          const localISO = data.current.time + ':00';   // Sekunden fehlen
+          const utcMs = new Date(localISO + 'Z').getTime() - utcOff * 1000;
+          return { ms: utcMs, tz: data.timezone || TIMEZONE };
+        }
+      },
+      {
+        id: 'local',
+        name: 'Lokale Uhr',
+        url: null,
+        parse() {
+          return { ms: Date.now(), tz: TIMEZONE };
+        }
+      }
+    ];
 
-    const cards = {};
-    document.querySelectorAll('.flip-card').forEach(c => {
-      cards[c.dataset.unit] = c;
-    });
+    /* ═══════════════════════════════════════════════
+       DOM
+       ═══════════════════════════════════════════════ */
+    const $ = id => document.getElementById(id);
+    const $status     = $('status');
+    const $statusText = $('statusText');
+    const $dateVal    = $('dateVal');
+    const $zoneVal    = $('zoneVal');
+    const $msVal      = $('msVal');
+    const $apiBar     = $('apiBar');
+    const $seps       = document.querySelectorAll('.separator');
 
-    /* ════════════════════════════════════════════
+    const digitCards = { h1: $('h1'), h2: $('h2'), m1: $('m1'), m2: $('m2'), s1: $('s1'), s2: $('s2') };
+
+    /* ═══════════════════════════════════════════════
        State
-       ════════════════════════════════════════════ */
-    let offsetMs      = 0;          // server-Zeit minus lokale Zeit
-    let activeTZ      = TIMEZONE;
-    let lastDateKey   = '';
-    let lastSecond    = -1;
-    let blinkState    = true;
-    let syncedOnce    = false;
-    let flipTimers    = new Map();  // card → timeout-ID (Cleanup-Sicherung)
+       ═══════════════════════════════════════════════ */
+    let offsetMs     = 0;
+    let activeTZ     = TIMEZONE;
+    let activeSource = API_SOURCES[0];
+    let lastDateKey  = '';
+    let lastSec      = -1;
+    let blinkOn      = true;
 
-    /* ════════════════════════════════════════════
+    /* ═══════════════════════════════════════════════
        Hilfsfunktionen
-       ════════════════════════════════════════════ */
-    const pad = (n, len = 2) => String(n).padStart(len, '0');
+       ═══════════════════════════════════════════════ */
+    const pad = (n, l = 2) => String(n).padStart(l, '0');
 
-    /** Gibt Stunden/Minuten/Sekunden/Millis in einer bestimmten Zeitzone zurück */
     function timeParts(date, tz) {
-      // Intl ist der einzige zuverlässige Weg, um Zeitzonen im Browser zu nutzen
-      const fmt = new Intl.DateTimeFormat('en-GB', {
+      const f = new Intl.DateTimeFormat('en-GB', {
         timeZone: tz,
         hour: '2-digit', minute: '2-digit', second: '2-digit',
-        hour12: false,
-        fractionalSecondDigits: 3
+        hour12: false
       });
-      const parts = {};
-      for (const {type, value} of fmt.formatToParts(date)) {
-        parts[type] = value;
-      }
+      const p = {};
+      for (const { type, value } of f.formatToParts(date)) p[type] = value;
       return {
-        hours:   pad(parseInt(parts.hour,   10)),
-        minutes: pad(parseInt(parts.minute, 10)),
-        seconds: pad(parseInt(parts.second, 10)),
-        millis:  pad(date.getMilliseconds(), 3)   // fractionalSecond nicht überall verfügbar
+        hh: pad(parseInt(p.hour)),
+        mm: pad(parseInt(p.minute)),
+        ss: pad(parseInt(p.second)),
+        ms: pad(date.getMilliseconds(), 3)
       };
     }
 
-    function formatDateLong(date, tz) {
+    function dateLong(date, tz) {
       return new Intl.DateTimeFormat('de-DE', {
-        weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
-        timeZone: tz
+        weekday: 'long', year: 'numeric', month: 'long', day: '2-digit', timeZone: tz
       }).format(date);
     }
 
-    function setStatus(text, type = 'default') {
+    function setStatus(text, type = '') {
       $statusText.textContent = text;
-      $status.classList.remove('error', 'synced');
-      if (type === 'error')  $status.classList.add('error');
-      if (type === 'synced') $status.classList.add('synced');
+      $status.className = 'status' + (type ? ' ' + type : '');
     }
 
-    /* ════════════════════════════════════════════
-       Flip-Karten-Logik
-       ════════════════════════════════════════════ */
-    function initCard(card, digit) {
-      card.dataset.current = digit;
-      card.querySelector('.flip-top').textContent      = digit;
-      card.querySelector('.flip-bottom').textContent    = digit;
-      card.querySelector('.flip-top-flip').textContent  = digit;
-      card.querySelector('.flip-bottom-flip').textContent = digit;
-      card.classList.remove('animating');
+    /* ═══════════════════════════════════════════════
+       Digit-Karten
+       ═══════════════════════════════════════════════ */
+    function setDigit(card, digit) {
+      if (card.dataset.cur === digit) return;
+      card.dataset.cur = digit;
+      card.querySelector('.digit-top').textContent    = digit;
+      card.querySelector('.digit-bottom').textContent  = digit;
+
+      // kurze Pop-Animation
+      card.classList.remove('changing');
+      void card.offsetWidth;
+      card.classList.add('changing');
     }
 
-    function flipTo(card, nextDigit) {
-      const cur = card.dataset.current ?? '0';
-      if (cur === nextDigit) return;
-
-      // Reduzierte Bewegung → sofortiger Wechsel
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        initCard(card, nextDigit);
-        return;
-      }
-
-      // Falls eine laufende Animation noch da ist → sofort abschließen
-      if (card.classList.contains('animating')) {
-        finishFlip(card, nextDigit);
-      }
-
-      const top      = card.querySelector('.flip-top');
-      const bottom   = card.querySelector('.flip-bottom');
-      const topFlip  = card.querySelector('.flip-top-flip');
-      const botFlip  = card.querySelector('.flip-bottom-flip');
-
-      // Obere Hälfte zeigt alten Wert, untere den neuen
-      top.textContent     = cur;
-      topFlip.textContent = cur;
-      bottom.textContent    = nextDigit;
-      botFlip.textContent   = nextDigit;
-
-      // Reflow erzwingen, damit die Klasse neu greift
-      card.classList.remove('animating');
-      void card.offsetHeight;
-      card.classList.add('animating');
-
-      // Sicherheits-Timeout: falls animationend nie feuert
-      if (flipTimers.has(card)) clearTimeout(flipTimers.get(card));
-      flipTimers.set(card, setTimeout(() => finishFlip(card, nextDigit), 750));
-
-      const onEnd = () => {
-        finishFlip(card, nextDigit);
-      };
-      botFlip.addEventListener('animationend', onEnd, { once: true });
-
-      card.dataset.current = nextDigit;   // sofort merken (verhindert Doppel-Trigger)
-    }
-
-    function finishFlip(card, digit) {
-      if (flipTimers.has(card)) {
-        clearTimeout(flipTimers.get(card));
-        flipTimers.delete(card);
-      }
-      card.querySelector('.flip-top').textContent     = digit;
-      card.querySelector('.flip-bottom').textContent   = digit;
-      card.querySelector('.flip-top-flip').textContent = digit;
-      card.querySelector('.flip-bottom-flip').textContent = digit;
-      card.classList.remove('animating');
-    }
-
-    /* ════════════════════════════════════════════
+    /* ═══════════════════════════════════════════════
        Render-Loop
-       ════════════════════════════════════════════ */
+       ═══════════════════════════════════════════════ */
     function render() {
-      const now  = new Date(Date.now() + offsetMs);
-      const t    = timeParts(now, activeTZ);
+      const now = new Date(Date.now() + offsetMs);
+      const t   = timeParts(now, activeTZ);
 
-      flipTo(cards.h1, t.hours[0]);
-      flipTo(cards.h2, t.hours[1]);
-      flipTo(cards.m1, t.minutes[0]);
-      flipTo(cards.m2, t.minutes[1]);
-      flipTo(cards.s1, t.seconds[0]);
-      flipTo(cards.s2, t.seconds[1]);
+      setDigit(digitCards.h1, t.hh[0]);
+      setDigit(digitCards.h2, t.hh[1]);
+      setDigit(digitCards.m1, t.mm[0]);
+      setDigit(digitCards.m2, t.mm[1]);
+      setDigit(digitCards.s1, t.ss[0]);
+      setDigit(digitCards.s2, t.ss[1]);
 
-      $ms.textContent = t.millis;
+      $msVal.textContent = t.ms;
 
-      // Separator blinken lassen (jede Sekunde toggeln)
-      const sec = parseInt(t.seconds, 10);
-      if (sec !== lastSecond) {
-        lastSecond = sec;
-        blinkState = !blinkState;
-        $separators.forEach(s => s.classList.toggle('blink-off', blinkState));
+      const sec = parseInt(t.ss);
+      if (sec !== lastSec) {
+        lastSec  = sec;
+        blinkOn  = !blinkOn;
+        $seps.forEach(s => s.classList.toggle('dim', blinkOn));
       }
 
-      // Datum nur bei Tageswechsel aktualisieren
-      const dk = t.hours + activeTZ;
+      const dk = t.hh + t.mm + activeTZ;
       if (dk !== lastDateKey) {
-        $dateText.textContent = formatDateLong(now, activeTZ);
+        $dateVal.textContent = dateLong(now, activeTZ);
         lastDateKey = dk;
       }
     }
 
-    /* ════════════════════════════════════════════
-       Zeit-Synchronisation
-       ════════════════════════════════════════════ */
-    async function fetchJSON(url, timeoutMs = 5000) {
-      const ctrl = new AbortController();
-      const id   = setTimeout(() => ctrl.abort(), timeoutMs);
+    /* ═══════════════════════════════════════════════
+       API Fetch
+       ═══════════════════════════════════════════════ */
+    async function fetchJSON(url, timeout = 6000) {
+      const ac = new AbortController();
+      const tm = setTimeout(() => ac.abort(), timeout);
       try {
-        const res = await fetch(url, {
-          signal: ctrl.signal,
-          cache: 'no-store',
-          headers: { Accept: 'application/json' }
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-      } finally {
-        clearTimeout(id);
-      }
-    }
-
-    function parseWorldTimeAPI(data) {
-      // data.datetime = "2025-01-15T14:23:45.123456+01:00"
-      if (!data.datetime) throw new Error('Kein datetime-Feld');
-      return {
-        serverMs: new Date(data.datetime).getTime(),
-        tz:       data.timezone || TIMEZONE
-      };
-    }
-
-    function parseTimeApiIo(data) {
-      // data has: year, month, day, hour, minute, seconds, milliSeconds, timeZone
-      if (!data.year) throw new Error('Kein year-Feld');
-      const iso = `${data.year}-${pad(data.month)}-${pad(data.day)}T${pad(data.hour)}:${pad(data.minute)}:${pad(data.seconds)}.${pad(data.milliSeconds,3)}`;
-      // Wir müssen den UTC-Offset kennen – timeapi.io gibt keinen explizit.
-      // Daher bauen wir das Date in der lokalen Engine und vergleichen.
-      const localGuess = new Date(iso);              // als UTC parsen
-      return {
-        serverMs: localGuess.getTime(),              // Näherung, reicht als Backup
-        tz:       data.timeZone || TIMEZONE
-      };
+        const r = await fetch(url, { signal: ac.signal, cache: 'no-store', headers: { Accept: 'application/json' } });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return await r.json();
+      } finally { clearTimeout(tm); }
     }
 
     async function syncTime() {
-      const beforeMs = Date.now();
+      const src = activeSource;
 
-      // Versuch 1: WorldTimeAPI
-      try {
-        setStatus('Synchronisiere…');
-        const data = await fetchJSON(API_PRIMARY);
-        const { serverMs, tz } = parseWorldTimeAPI(data);
-        const rtt = (Date.now() - beforeMs) / 2;      // grobe Latenzkompensation
-        offsetMs  = serverMs + rtt - Date.now();
-        activeTZ  = tz;
-        $zoneText.textContent = activeTZ;
-        syncedOnce = true;
-        setStatus('Live synchronisiert ✓', 'synced');
+      // Lokale Uhr → kein Fetch nötig
+      if (!src.url) {
+        offsetMs = 0;
+        activeTZ = TIMEZONE;
+        $zoneVal.textContent = `${TIMEZONE} (lokal)`;
+        setStatus(`${src.name} – keine Synchronisation`, 'synced');
         return;
-      } catch (e) {
-        console.warn('WorldTimeAPI fehlgeschlagen:', e);
       }
 
-      // Versuch 2: TimeAPI.io
-      try {
-        const data = await fetchJSON(API_BACKUP);
-        const { serverMs, tz } = parseTimeApiIo(data);
-        const rtt = (Date.now() - beforeMs) / 2;
-        offsetMs  = serverMs + rtt - Date.now();
-        activeTZ  = tz;
-        $zoneText.textContent = activeTZ;
-        syncedOnce = true;
-        setStatus('Sync via Backup-API ✓', 'synced');
-        return;
-      } catch (e) {
-        console.warn('TimeAPI.io fehlgeschlagen:', e);
-      }
+      setStatus(`Synchronisiere mit ${src.name}…`, 'syncing');
+      const t0 = Date.now();
 
-      // Fallback: lokale Systemuhr
-      offsetMs = 0;
-      activeTZ = TIMEZONE;
-      $zoneText.textContent = `${TIMEZONE} (lokal)`;
-      setStatus(
-        syncedOnce
-          ? 'APIs nicht erreichbar – letzte Sync wird fortgesetzt'
-          : 'Keine API erreichbar – nutze lokale Systemuhr',
-        'error'
-      );
+      try {
+        const data = await fetchJSON(src.url);
+        const { ms, tz } = src.parse(data);
+        const rtt = (Date.now() - t0) / 2;
+        offsetMs = ms + rtt - Date.now();
+        activeTZ = tz;
+        $zoneVal.textContent = activeTZ;
+        lastDateKey = '';
+        setStatus(`${src.name} – synchronisiert ✓`, 'synced');
+      } catch (e) {
+        console.warn(`${src.name} Fehler:`, e);
+
+        // Fallback: lokale Uhr
+        offsetMs = 0;
+        activeTZ = TIMEZONE;
+        $zoneVal.textContent = `${TIMEZONE} (Fallback)`;
+        setStatus(`${src.name} nicht erreichbar – lokale Uhr`, 'error');
+      }
     }
 
-    /* ════════════════════════════════════════════
-       Start
-       ════════════════════════════════════════════ */
-    async function start() {
-      $zoneText.textContent = TIMEZONE;
-      Object.values(cards).forEach(c => initCard(c, '0'));
+    /* ═══════════════════════════════════════════════
+       API-Buttons erzeugen
+       ═══════════════════════════════════════════════ */
+    function buildAPIBar() {
+      API_SOURCES.forEach(src => {
+        const btn = document.createElement('button');
+        btn.className = 'api-btn' + (src.id === activeSource.id ? ' active' : '');
+        btn.textContent = src.name;
+        btn.dataset.id = src.id;
+        btn.addEventListener('click', () => selectSource(src.id));
+        $apiBar.appendChild(btn);
+      });
+    }
 
-      // Sofort erste Anzeige mit lokaler Uhr
+    function selectSource(id) {
+      activeSource = API_SOURCES.find(s => s.id === id) || API_SOURCES[0];
+      document.querySelectorAll('.api-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.id === id);
+      });
+      syncTime();
+    }
+
+    /* ═══════════════════════════════════════════════
+       Start
+       ═══════════════════════════════════════════════ */
+    async function start() {
+      buildAPIBar();
+      $zoneVal.textContent = TIMEZONE;
+
+      // Initialisierung
+      Object.values(digitCards).forEach(c => { c.dataset.cur = ''; });
       render();
 
-      // Dann synchronisieren
       await syncTime();
       render();
 
-      // Render-Loop via requestAnimationFrame + Throttle
-      let lastFrame = 0;
+      // Render-Loop via rAF
+      let last = 0;
       function loop(ts) {
-        if (ts - lastFrame >= RENDER_INTERVAL) {
-          lastFrame = ts;
-          render();
-        }
+        if (ts - last >= 40) { last = ts; render(); }
         requestAnimationFrame(loop);
       }
       requestAnimationFrame(loop);
 
-      // Regelmäßige Re-Synchronisation
-      setInterval(syncTime, SYNC_INTERVAL_MS);
+      // Re-Sync alle 60 Sekunden
+      setInterval(syncTime, 60_000);
     }
 
     start();
