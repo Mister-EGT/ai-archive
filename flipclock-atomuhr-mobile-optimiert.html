@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlipClock Atomzeit</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #111827;
+      --panel-2: #0f172a;
+      --card: #171f2d;
+      --card-top: #243044;
+      --card-bottom: #101826;
+      --line: rgba(255,255,255,0.08);
+      --text: #f8fafc;
+      --muted: #9fb0c8;
+      --accent: #7dd3fc;
+      --shadow: rgba(0, 0, 0, 0.45);
+      --digit-width: clamp(44px, calc((100vw - 9.5rem) / 6), 150px);
+      --digit-height: clamp(58px, calc(var(--digit-width) * 1.27), 190px);
+      --digit-font: clamp(2rem, calc(var(--digit-width) * 0.82), 6rem);
+      --radius: clamp(10px, 2vw, 18px);
+      --flip-speed: 620ms;
+      --clock-gap: clamp(6px, 1.6vw, 18px);
+      --group-gap: clamp(4px, 1vw, 10px);
+      --label-size: clamp(0.66rem, 1.4vw, 0.82rem);
+      --app-padding-x: clamp(12px, 2.6vw, 22px);
+      --app-padding-y: clamp(16px, 3vw, 28px);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(125,211,252,0.08), transparent 30%),
+        linear-gradient(180deg, #0b1020 0%, #090d14 100%);
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: clamp(10px, 2.8vw, 28px);
+    }
+
+    .app {
+      width: min(1100px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: clamp(18px, 3vw, 28px);
+      box-shadow:
+        0 24px 70px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      padding: var(--app-padding-y) var(--app-padding-x) calc(var(--app-padding-y) - 6px);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: clamp(14px, 3vw, 22px);
+      flex-wrap: wrap;
+    }
+
+    .title {
+      font-size: clamp(0.95rem, 1.4vw, 1.25rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--muted);
+      font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+      max-width: 100%;
+      min-width: min(100%, 270px);
+      transition: border-color 0.3s;
+    }
+
+    .status.error {
+      border-color: rgba(252,165,165,0.4);
+    }
+
+    .status.error .status-dot {
+      background: #fca5a5;
+      box-shadow: 0 0 12px rgba(252,165,165,0.8);
+    }
+
+    .status.synced .status-dot {
+      background: #34d399;
+      box-shadow: 0 0 12px rgba(52,211,153,0.8);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #67e8f9;
+      box-shadow: 0 0 12px rgba(103,232,249,0.8);
+      flex: 0 0 auto;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    #statusText {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .clock-wrap {
+      width: 100%;
+      overflow: hidden;
+      padding-bottom: 4px;
+    }
+
+    .clock {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--clock-gap);
+      padding: 6px 0 10px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .time-group {
+      display: flex;
+      align-items: center;
+      gap: var(--group-gap);
+      min-width: 0;
+    }
+
+    .separator {
+      font-size: clamp(1.5rem, 5vw, 5rem);
+      font-weight: 800;
+      line-height: 1;
+      color: rgba(255,255,255,0.75);
+      text-shadow: 0 4px 14px rgba(0,0,0,0.45);
+      transform: translateY(-4px);
+      user-select: none;
+      flex: 0 0 auto;
+      transition: opacity 0.25s ease;
+    }
+
+    .separator.blink-off {
+      opacity: 0.2;
+    }
+
+    .digit-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(6px, 1vw, 10px);
+      min-width: 0;
+    }
+
+    .label {
+      font-size: var(--label-size);
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: center;
+      min-height: 1em;
+    }
+
+    .flip-card {
+      position: relative;
+      width: var(--digit-width);
+      height: var(--digit-height);
+      perspective: 1200px;
+      filter: drop-shadow(0 18px 18px rgba(0,0,0,0.28));
+      flex: 0 0 auto;
+    }
+
+    .flip-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .flip-top,
+    .flip-bottom,
+    .flip-top-flip,
+    .flip-bottom-flip {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
+      font-weight: 800;
+      color: var(--text);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--card-top), var(--card));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+      backface-visibility: hidden;
+      border-radius: var(--radius);
+      font-size: var(--digit-font);
+      line-height: 1.1;
+    }
+
+    .flip-top,
+    .flip-top-flip {
+      top: 0;
+      height: 50%;
+      align-items: flex-end;
+      padding-bottom: calc(var(--digit-height) * 0.06);
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      clip-path: inset(0 0 0 0 round var(--radius) var(--radius) 0 0);
+    }
+
+    .flip-bottom,
+    .flip-bottom-flip {
+      bottom: 0;
+      height: 50%;
+      align-items: flex-start;
+      padding-top: calc(var(--digit-height) * 0.06);
+      background: linear-gradient(180deg, #172031, var(--card-bottom));
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      clip-path: inset(0 0 0 0 round 0 0 var(--radius) var(--radius));
+    }
+
+    .flip-card::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 2px;
+      background: rgba(0,0,0,0.55);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+      transform: translateY(-1px);
+      z-index: 6;
+    }
+
+    .hinge,
+    .hinge-right {
+      position: absolute;
+      top: 50%;
+      width: clamp(6px, 1vw, 10px);
+      height: clamp(6px, 1vw, 10px);
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.08);
+      z-index: 7;
+      transform: translateY(-50%);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.08);
+    }
+
+    .hinge { left: clamp(4px, 0.7vw, 8px); }
+    .hinge-right { right: clamp(4px, 0.7vw, 8px); }
+
+    /* ── Flip-Animation ── */
+    .flip-top-flip {
+      z-index: 4;
+      transform-origin: bottom center;
+      transform: rotateX(0deg);
+    }
+
+    .flip-bottom-flip {
+      z-index: 3;
+      transform-origin: top center;
+      transform: rotateX(90deg);
+    }
+
+    .flip-card.animating .flip-top-flip {
+      animation: flipTop var(--flip-speed) cubic-bezier(.37,.01,.2,1) forwards;
+    }
+
+    .flip-card.animating .flip-bottom-flip {
+      animation: flipBottom var(--flip-speed) cubic-bezier(.21,.61,.35,1) forwards;
+      animation-delay: calc(var(--flip-speed) * 0.45);
+    }
+
+    @keyframes flipTop {
+      0%   { transform: rotateX(0deg); }
+      100% { transform: rotateX(-90deg); }
+    }
+
+    @keyframes flipBottom {
+      0%   { transform: rotateX(90deg); }
+      100% { transform: rotateX(0deg); }
+    }
+
+    .meta {
+      margin-top: 12px;
+      display: grid;
+      gap: 12px;
+      justify-items: stretch;
+      text-align: center;
+    }
+
+    .ms-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      min-width: 0;
+      width: min(100%, 420px);
+      justify-content: center;
+      flex-wrap: wrap;
+      justify-self: center;
+    }
+
+    .meta-label {
+      font-size: clamp(0.72rem, 1.4vw, 0.82rem);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .ms-value,
+    .date-value,
+    .zone-value {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .ms-value {
+      font-size: clamp(1.15rem, 3vw, 1.9rem);
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .date-value,
+    .zone-value {
+      font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+      font-weight: 600;
+    }
+
+    .footer {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: clamp(0.78rem, 1.8vw, 0.9rem);
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 860px) {
+      .topbar { justify-content: center; text-align: center; }
+      .status { justify-content: center; }
+    }
+
+    @media (max-width: 560px) {
+      :root {
+        --digit-width: clamp(42px, calc((100vw - 6.2rem) / 6), 64px);
+        --clock-gap: 6px;
+        --group-gap: 3px;
+      }
+      body { padding: 10px; }
+      .app { width: 100%; }
+      .topbar { gap: 10px; }
+      .title, .status { width: 100%; }
+      .status { min-width: 0; border-radius: 16px; }
+      .label { letter-spacing: 0.08em; }
+      .separator { transform: translateY(-2px); }
+      .ms-row { width: 100%; padding: 12px 14px; }
+    }
+
+    @media (max-width: 400px) {
+      :root {
+        --digit-width: clamp(38px, calc((100vw - 5.6rem) / 6), 54px);
+        --label-size: 0.6rem;
+      }
+      .separator { font-size: 1.35rem; }
+      .hinge, .hinge-right { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .flip-card.animating .flip-top-flip,
+      .flip-card.animating .flip-bottom-flip {
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <div class="title">FlipClock Atomzeit</div>
+      <div class="status" id="status">
+        <span class="status-dot"></span>
+        <span id="statusText">Synchronisiere Zeitquelle…</span>
+      </div>
+    </div>
+
+    <div class="clock-wrap">
+      <section class="clock" aria-label="Digitale FlipClock">
+        <div class="time-group">
+          <div class="digit-stack">
+            <div class="label">Stunden</div>
+            <div class="flip-card" data-unit="h1">
+              <div class="hinge"></div><div class="hinge-right"></div>
+              <div class="flip-top">0</div>
+              <div class="flip-bottom">0</div>
+              <div class="flip-top-flip">0</div>
+              <div class="flip-bottom-flip">0</div>
+            </div>
+          </div>
+          <div class="digit-stack">
+            <div class="label">&nbsp;</div>
+            <div class="flip-card" data-unit="h2">
+              <div class="hinge"></div><div class="hinge-right"></div>
+              <div class="flip-top">0</div>
+              <div class="flip-bottom">0</div>
+              <div class="flip-top-flip">0</div>
+              <div class="flip-bottom-flip">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="separator" aria-hidden="true">:</div>
+
+        <div class="time-group">
+          <div class="digit-stack">
+            <div class="label">Minuten</div>
+            <div class="flip-card" data-unit="m1">
+              <div class="hinge"></div><div class="hinge-right"></div>
+              <div class="flip-top">0</div>
+              <div class="flip-bottom">0</div>
+              <div class="flip-top-flip">0</div>
+              <div class="flip-bottom-flip">0</div>
+            </div>
+          </div>
+          <div class="digit-stack">
+            <div class="label">&nbsp;</div>
+            <div class="flip-card" data-unit="m2">
+              <div class="hinge"></div><div class="hinge-right"></div>
+              <div class="flip-top">0</div>
+              <div class="flip-bottom">0</div>
+              <div class="flip-top-flip">0</div>
+              <div class="flip-bottom-flip">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="separator" aria-hidden="true">:</div>
+
+        <div class="time-group">
+          <div class="digit-stack">
+            <div class="label">Sekunden</div>
+            <div class="flip-card" data-unit="s1">
+              <div class="hinge"></div><div class="hinge-right"></div>
+              <div class="flip-top">0</div>
+              <div class="flip-bottom">0</div>
+              <div class="flip-top-flip">0</div>
+              <div class="flip-bottom-flip">0</div>
+            </div>
+          </div>
+          <div class="digit-stack">
+            <div class="label">&nbsp;</div>
+            <div class="flip-card" data-unit="s2">
+              <div class="hinge"></div><div class="hinge-right"></div>
+              <div class="flip-top">0</div>
+              <div class="flip-bottom">0</div>
+              <div class="flip-top-flip">0</div>
+              <div class="flip-bottom-flip">0</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="meta" aria-label="Zusätzliche Zeitinfos">
+      <div class="ms-row">
+        <span class="meta-label">Millisekunden</span>
+        <span class="ms-value" id="milliseconds">000</span>
+      </div>
+      <div class="ms-row">
+        <span class="meta-label">Datum</span>
+        <span class="date-value" id="dateText">Lade Datum…</span>
+      </div>
+      <div class="ms-row">
+        <span class="meta-label">Zeitzone</span>
+        <span class="zone-value" id="zoneText">Ermittle Zeitzone…</span>
+      </div>
+    </section>
+
+    <div class="footer">
+      Zeit wird per API synchronisiert und dazwischen lokal interpoliert.<br>
+      Datenquelle: <a href="https://worldtimeapi.org" target="_blank" rel="noopener noreferrer">WorldTimeAPI</a>
+    </div>
+  </main>
+
+  <script>
+    /* ════════════════════════════════════════════
+       Konfiguration
+       ════════════════════════════════════════════ */
+    const TIMEZONE    = 'Europe/Berlin';
+    const API_PRIMARY = `https://worldtimeapi.org/api/timezone/${TIMEZONE}`;
+    const API_BACKUP  = `https://timeapi.io/api/time/current/zone?timeZone=${TIMEZONE}`;
+    const SYNC_INTERVAL_MS  = 60_000;      // Re-Sync alle 60 s
+    const RENDER_INTERVAL   = 50;          // ms zwischen Frames
+
+    /* ════════════════════════════════════════════
+       DOM-Referenzen
+       ════════════════════════════════════════════ */
+    const $status      = document.getElementById('status');
+    const $statusText  = document.getElementById('statusText');
+    const $dateText    = document.getElementById('dateText');
+    const $zoneText    = document.getElementById('zoneText');
+    const $ms          = document.getElementById('milliseconds');
+    const $separators  = document.querySelectorAll('.separator');
+
+    const cards = {};
+    document.querySelectorAll('.flip-card').forEach(c => {
+      cards[c.dataset.unit] = c;
+    });
+
+    /* ════════════════════════════════════════════
+       State
+       ════════════════════════════════════════════ */
+    let offsetMs      = 0;          // server-Zeit minus lokale Zeit
+    let activeTZ      = TIMEZONE;
+    let lastDateKey   = '';
+    let lastSecond    = -1;
+    let blinkState    = true;
+    let syncedOnce    = false;
+    let flipTimers    = new Map();  // card → timeout-ID (Cleanup-Sicherung)
+
+    /* ════════════════════════════════════════════
+       Hilfsfunktionen
+       ════════════════════════════════════════════ */
+    const pad = (n, len = 2) => String(n).padStart(len, '0');
+
+    /** Gibt Stunden/Minuten/Sekunden/Millis in einer bestimmten Zeitzone zurück */
+    function timeParts(date, tz) {
+      // Intl ist der einzige zuverlässige Weg, um Zeitzonen im Browser zu nutzen
+      const fmt = new Intl.DateTimeFormat('en-GB', {
+        timeZone: tz,
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false,
+        fractionalSecondDigits: 3
+      });
+      const parts = {};
+      for (const {type, value} of fmt.formatToParts(date)) {
+        parts[type] = value;
+      }
+      return {
+        hours:   pad(parseInt(parts.hour,   10)),
+        minutes: pad(parseInt(parts.minute, 10)),
+        seconds: pad(parseInt(parts.second, 10)),
+        millis:  pad(date.getMilliseconds(), 3)   // fractionalSecond nicht überall verfügbar
+      };
+    }
+
+    function formatDateLong(date, tz) {
+      return new Intl.DateTimeFormat('de-DE', {
+        weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
+        timeZone: tz
+      }).format(date);
+    }
+
+    function setStatus(text, type = 'default') {
+      $statusText.textContent = text;
+      $status.classList.remove('error', 'synced');
+      if (type === 'error')  $status.classList.add('error');
+      if (type === 'synced') $status.classList.add('synced');
+    }
+
+    /* ════════════════════════════════════════════
+       Flip-Karten-Logik
+       ════════════════════════════════════════════ */
+    function initCard(card, digit) {
+      card.dataset.current = digit;
+      card.querySelector('.flip-top').textContent      = digit;
+      card.querySelector('.flip-bottom').textContent    = digit;
+      card.querySelector('.flip-top-flip').textContent  = digit;
+      card.querySelector('.flip-bottom-flip').textContent = digit;
+      card.classList.remove('animating');
+    }
+
+    function flipTo(card, nextDigit) {
+      const cur = card.dataset.current ?? '0';
+      if (cur === nextDigit) return;
+
+      // Reduzierte Bewegung → sofortiger Wechsel
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        initCard(card, nextDigit);
+        return;
+      }
+
+      // Falls eine laufende Animation noch da ist → sofort abschließen
+      if (card.classList.contains('animating')) {
+        finishFlip(card, nextDigit);
+      }
+
+      const top      = card.querySelector('.flip-top');
+      const bottom   = card.querySelector('.flip-bottom');
+      const topFlip  = card.querySelector('.flip-top-flip');
+      const botFlip  = card.querySelector('.flip-bottom-flip');
+
+      // Obere Hälfte zeigt alten Wert, untere den neuen
+      top.textContent     = cur;
+      topFlip.textContent = cur;
+      bottom.textContent    = nextDigit;
+      botFlip.textContent   = nextDigit;
+
+      // Reflow erzwingen, damit die Klasse neu greift
+      card.classList.remove('animating');
+      void card.offsetHeight;
+      card.classList.add('animating');
+
+      // Sicherheits-Timeout: falls animationend nie feuert
+      if (flipTimers.has(card)) clearTimeout(flipTimers.get(card));
+      flipTimers.set(card, setTimeout(() => finishFlip(card, nextDigit), 750));
+
+      const onEnd = () => {
+        finishFlip(card, nextDigit);
+      };
+      botFlip.addEventListener('animationend', onEnd, { once: true });
+
+      card.dataset.current = nextDigit;   // sofort merken (verhindert Doppel-Trigger)
+    }
+
+    function finishFlip(card, digit) {
+      if (flipTimers.has(card)) {
+        clearTimeout(flipTimers.get(card));
+        flipTimers.delete(card);
+      }
+      card.querySelector('.flip-top').textContent     = digit;
+      card.querySelector('.flip-bottom').textContent   = digit;
+      card.querySelector('.flip-top-flip').textContent = digit;
+      card.querySelector('.flip-bottom-flip').textContent = digit;
+      card.classList.remove('animating');
+    }
+
+    /* ════════════════════════════════════════════
+       Render-Loop
+       ════════════════════════════════════════════ */
+    function render() {
+      const now  = new Date(Date.now() + offsetMs);
+      const t    = timeParts(now, activeTZ);
+
+      flipTo(cards.h1, t.hours[0]);
+      flipTo(cards.h2, t.hours[1]);
+      flipTo(cards.m1, t.minutes[0]);
+      flipTo(cards.m2, t.minutes[1]);
+      flipTo(cards.s1, t.seconds[0]);
+      flipTo(cards.s2, t.seconds[1]);
+
+      $ms.textContent = t.millis;
+
+      // Separator blinken lassen (jede Sekunde toggeln)
+      const sec = parseInt(t.seconds, 10);
+      if (sec !== lastSecond) {
+        lastSecond = sec;
+        blinkState = !blinkState;
+        $separators.forEach(s => s.classList.toggle('blink-off', blinkState));
+      }
+
+      // Datum nur bei Tageswechsel aktualisieren
+      const dk = t.hours + activeTZ;
+      if (dk !== lastDateKey) {
+        $dateText.textContent = formatDateLong(now, activeTZ);
+        lastDateKey = dk;
+      }
+    }
+
+    /* ════════════════════════════════════════════
+       Zeit-Synchronisation
+       ════════════════════════════════════════════ */
+    async function fetchJSON(url, timeoutMs = 5000) {
+      const ctrl = new AbortController();
+      const id   = setTimeout(() => ctrl.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, {
+          signal: ctrl.signal,
+          cache: 'no-store',
+          headers: { Accept: 'application/json' }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } finally {
+        clearTimeout(id);
+      }
+    }
+
+    function parseWorldTimeAPI(data) {
+      // data.datetime = "2025-01-15T14:23:45.123456+01:00"
+      if (!data.datetime) throw new Error('Kein datetime-Feld');
+      return {
+        serverMs: new Date(data.datetime).getTime(),
+        tz:       data.timezone || TIMEZONE
+      };
+    }
+
+    function parseTimeApiIo(data) {
+      // data has: year, month, day, hour, minute, seconds, milliSeconds, timeZone
+      if (!data.year) throw new Error('Kein year-Feld');
+      const iso = `${data.year}-${pad(data.month)}-${pad(data.day)}T${pad(data.hour)}:${pad(data.minute)}:${pad(data.seconds)}.${pad(data.milliSeconds,3)}`;
+      // Wir müssen den UTC-Offset kennen – timeapi.io gibt keinen explizit.
+      // Daher bauen wir das Date in der lokalen Engine und vergleichen.
+      const localGuess = new Date(iso);              // als UTC parsen
+      return {
+        serverMs: localGuess.getTime(),              // Näherung, reicht als Backup
+        tz:       data.timeZone || TIMEZONE
+      };
+    }
+
+    async function syncTime() {
+      const beforeMs = Date.now();
+
+      // Versuch 1: WorldTimeAPI
+      try {
+        setStatus('Synchronisiere…');
+        const data = await fetchJSON(API_PRIMARY);
+        const { serverMs, tz } = parseWorldTimeAPI(data);
+        const rtt = (Date.now() - beforeMs) / 2;      // grobe Latenzkompensation
+        offsetMs  = serverMs + rtt - Date.now();
+        activeTZ  = tz;
+        $zoneText.textContent = activeTZ;
+        syncedOnce = true;
+        setStatus('Live synchronisiert ✓', 'synced');
+        return;
+      } catch (e) {
+        console.warn('WorldTimeAPI fehlgeschlagen:', e);
+      }
+
+      // Versuch 2: TimeAPI.io
+      try {
+        const data = await fetchJSON(API_BACKUP);
+        const { serverMs, tz } = parseTimeApiIo(data);
+        const rtt = (Date.now() - beforeMs) / 2;
+        offsetMs  = serverMs + rtt - Date.now();
+        activeTZ  = tz;
+        $zoneText.textContent = activeTZ;
+        syncedOnce = true;
+        setStatus('Sync via Backup-API ✓', 'synced');
+        return;
+      } catch (e) {
+        console.warn('TimeAPI.io fehlgeschlagen:', e);
+      }
+
+      // Fallback: lokale Systemuhr
+      offsetMs = 0;
+      activeTZ = TIMEZONE;
+      $zoneText.textContent = `${TIMEZONE} (lokal)`;
+      setStatus(
+        syncedOnce
+          ? 'APIs nicht erreichbar – letzte Sync wird fortgesetzt'
+          : 'Keine API erreichbar – nutze lokale Systemuhr',
+        'error'
+      );
+    }
+
+    /* ════════════════════════════════════════════
+       Start
+       ════════════════════════════════════════════ */
+    async function start() {
+      $zoneText.textContent = TIMEZONE;
+      Object.values(cards).forEach(c => initCard(c, '0'));
+
+      // Sofort erste Anzeige mit lokaler Uhr
+      render();
+
+      // Dann synchronisieren
+      await syncTime();
+      render();
+
+      // Render-Loop via requestAnimationFrame + Throttle
+      let lastFrame = 0;
+      function loop(ts) {
+        if (ts - lastFrame >= RENDER_INTERVAL) {
+          lastFrame = ts;
+          render();
+        }
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+
+      // Regelmäßige Re-Synchronisation
+      setInterval(syncTime, SYNC_INTERVAL_MS);
+    }
+
+    start();
+  </script>
+</body>
+</html>
