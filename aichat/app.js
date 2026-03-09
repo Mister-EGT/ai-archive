@@ -1,15 +1,10 @@
 const APP_CONFIG = {
-  hardcodedApiKey: '',
+  hardcodedApiKey: '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',
   apiBase: 'https://openrouter.ai/api/v1',
   referer: '',
   appTitle: 'NovaRouter Chat UI',
   allowedModels: [
-    'openai/gpt-4o-mini',
-    'openai/gpt-4.1-mini',
-    'anthropic/claude-3.7-sonnet',
-    'google/gemini-2.0-flash-001',
-    'meta-llama/llama-3.3-70b-instruct',
-    'qwen/qwen-2.5-72b-instruct'
+    'stepfun/step-3.5-flash:free'
   ],
   allowAttachments: true,
   allowModelEditingInUi: false
