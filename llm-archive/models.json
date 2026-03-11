@@ -807,7 +807,7 @@
   "id": "seed_2.0_lite",
   "name": "Seed-2.0-Lite",
   "developerName": "ByteDance Seed",
-  "developerLogoUrl": "assets/ByteDance_Seed.png",
+  "developerLogoUrl": "assets/ByteDance_Seed.svg",
   "contextWindow": 262144,
   "inputCostPer1MTokens": 0.25,
   "outputCostPer1MTokens": 2,
