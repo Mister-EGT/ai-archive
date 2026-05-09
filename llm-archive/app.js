@@ -1,4 +1,4 @@
-﻿const els = {
+const els = {
   q: document.getElementById("q"),
   developer: document.getElementById("developer"),
   modality: document.getElementById("modality"),
@@ -20,7 +20,7 @@
   calcResult: document.getElementById("calcResult")
 };
 
-const d = {
+const detailEls = {
   logo: document.getElementById("dLogo"),
   name: document.getElementById("dName"),
   dev: document.getElementById("dDev"),
@@ -31,12 +31,12 @@ const d = {
 };
 
 let allModels = [];
-let filtered = [];
+let filteredModels = [];
 let activeColumns = [];
 let tokenCalcModels = [];
 
-function escapeHtml(s) {
-  return String(s ?? "")
+function escapeHtml(value) {
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -44,33 +44,37 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
-function normalize(s) {
-  return String(s ?? "").toLowerCase().trim();
+function normalize(value) {
+  return String(value ?? "").toLowerCase().trim();
 }
 
-function fmtMoney(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return null;
-  return `${n.toFixed(2)} $/1M`;
+function fmtMoney(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+  return `${number.toFixed(2)} $/1M`;
 }
 
-function fmtInt(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return null;
-  return Intl.NumberFormat("de-DE").format(n);
+function fmtInt(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+  return Intl.NumberFormat("de-DE").format(number);
 }
 
-function fmtCurrency(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return null;
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "USD" }).format(n);
+function fmtCurrency(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "USD"
+  }).format(number);
 }
 
-function fmtDate(s) {
-  if (!s) return null;
-  const dt = new Date(s);
-  if (Number.isNaN(dt.getTime())) return String(s);
-  return dt.toLocaleDateString("de-DE");
+function fmtDate(value) {
+  if (!value) return null;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString("de-DE");
 }
 
 function statusDot(status) {
@@ -84,12 +88,14 @@ function badge(label, dotClass = "") {
 }
 
 function hasAny(models, key) {
-  return models.some(m => {
-    if (!m || !Object.prototype.hasOwnProperty.call(m, key)) return false;
-    const v = m[key];
-    if (v === null || v === undefined) return false;
-    if (typeof v === "string" && v.trim() === "") return false;
-    if (Array.isArray(v) && v.length === 0) return false;
+  return models.some(model => {
+    if (!model || !Object.prototype.hasOwnProperty.call(model, key)) return false;
+
+    const value = model[key];
+    if (value === null || value === undefined) return false;
+    if (typeof value === "string" && value.trim() === "") return false;
+    if (Array.isArray(value) && value.length === 0) return false;
+
     return true;
   });
 }
@@ -98,14 +104,14 @@ function getActiveColumns(models) {
   const candidates = [
     {
       key: "name",
-      label: "Model",
+      label: "Modell",
       type: "text",
       important: true,
-      cell: (m) => {
-        const logo = m.modelIconUrl
-          ? `<img src="${escapeHtml(m.modelIconUrl)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      cell: model => {
+        const logo = model.modelIconUrl
+          ? `<img src="${escapeHtml(model.modelIconUrl)}" alt="" loading="lazy" onerror="this.style.display='none'">`
           : "";
-        return `<span class="dev"><span>${escapeHtml(m.name || "")}</span>${logo}</span>`
+        return `<span class="dev"><span>${escapeHtml(model.name || "")}</span>${logo}</span>`;
       }
     },
     {
@@ -113,78 +119,80 @@ function getActiveColumns(models) {
       label: "Entwickler",
       type: "text",
       important: true,
-      cell: (m) => {
-        const logo = m.developerLogoUrl
-          ? `<img src="${escapeHtml(m.developerLogoUrl)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      cell: model => {
+        const logo = model.developerLogoUrl
+          ? `<img src="${escapeHtml(model.developerLogoUrl)}" alt="" loading="lazy" onerror="this.style.display='none'">`
           : "";
-        return `<span class="dev">${logo}<span>${escapeHtml(m.developerName || "")}</span></span>`;
+        return `<span class="dev">${logo}<span>${escapeHtml(model.developerName || "")}</span></span>`;
       }
     },
     {
       key: "contextWindow",
       label: "Kontext",
       type: "text",
-      cell: (m) => escapeHtml(fmtInt(m.contextWindow) ?? "")
+      cell: model => escapeHtml(fmtInt(model.contextWindow) ?? "")
     },
     {
       key: "inputCostPer1MTokens",
       label: "Input",
       type: "text",
-      cell: (m) => escapeHtml(fmtMoney(m.inputCostPer1MTokens) ?? "")
+      cell: model => escapeHtml(fmtMoney(model.inputCostPer1MTokens) ?? "")
     },
     {
       key: "outputCostPer1MTokens",
       label: "Output",
       type: "text",
-      cell: (m) => escapeHtml(fmtMoney(m.outputCostPer1MTokens) ?? "")
+      cell: model => escapeHtml(fmtMoney(model.outputCostPer1MTokens) ?? "")
     },
     {
       key: "modality",
-      label: "ModalitÃ¤t",
+      label: "Modalität",
       type: "badge",
-      cell: (m) => m.modality ? badge(m.modality) : ""
+      cell: model => model.modality ? badge(model.modality) : ""
     },
     {
       key: "status",
       label: "Status",
       type: "badge",
-      cell: (m) => m.status ? badge(m.status, statusDot(m.status)) : ""
+      cell: model => model.status ? badge(model.status, statusDot(model.status)) : ""
     },
     {
       key: "releaseDate",
       label: "Release",
       type: "text",
-      cell: (m) => escapeHtml(fmtDate(m.releaseDate) ?? "")
+      cell: model => escapeHtml(fmtDate(model.releaseDate) ?? "")
     },
     {
       key: "tags",
       label: "Tags",
       type: "text",
-      cell: (m) => {
-        const tags = Array.isArray(m.tags) ? m.tags : null;
+      cell: model => {
+        const tags = Array.isArray(model.tags) ? model.tags : null;
         return tags ? escapeHtml(tags.slice(0, 5).join(", ")) : "";
       }
     }
   ];
 
-  return candidates.filter(c => c.important || hasAny(models, c.key));
+  return candidates.filter(column => column.important || hasAny(models, column.key));
 }
 
-function buildSortOptions(cols) {
-  const options = [];
+function buildSortOptions(columns) {
+  const options = [
+    { value: "name-asc", label: "Name A bis Z" },
+    { value: "name-desc", label: "Name Z bis A" }
+  ];
 
-  options.push({ value: "name-asc", label: "Name A Z" });
-  options.push({ value: "name-desc", label: "Name Z A" });
-
-  if (cols.some(c => c.key === "inputCostPer1MTokens")) {
+  if (columns.some(column => column.key === "inputCostPer1MTokens")) {
     options.push({ value: "in-asc", label: "Input Kosten aufsteigend" });
     options.push({ value: "in-desc", label: "Input Kosten absteigend" });
   }
-  if (cols.some(c => c.key === "outputCostPer1MTokens")) {
+
+  if (columns.some(column => column.key === "outputCostPer1MTokens")) {
     options.push({ value: "out-asc", label: "Output Kosten aufsteigend" });
     options.push({ value: "out-desc", label: "Output Kosten absteigend" });
   }
-  if (cols.some(c => c.key === "releaseDate")) {
+
+  if (columns.some(column => column.key === "releaseDate")) {
     options.push({ value: "release-desc", label: "Release neu zuerst" });
     options.push({ value: "release-asc", label: "Release alt zuerst" });
   }
@@ -193,33 +201,36 @@ function buildSortOptions(cols) {
 }
 
 function fillDeveloperFilter(models) {
-  const set = new Set(models.map(m => m.developerName).filter(Boolean));
-  const devs = ["", ...Array.from(set).sort((a, b) => a.localeCompare(b, "de"))];
-  els.developer.innerHTML = devs
-    .map(v => `<option value="${escapeHtml(v)}">${v ? escapeHtml(v) : "Alle"}</option>`)
+  const developers = new Set(models.map(model => model.developerName).filter(Boolean));
+  const options = ["", ...Array.from(developers).sort((a, b) => a.localeCompare(b, "de"))];
+
+  els.developer.innerHTML = options
+    .map(value => `<option value="${escapeHtml(value)}">${value ? escapeHtml(value) : "Alle"}</option>`)
     .join("");
 }
 
 function applyFilters() {
-  const q = normalize(els.q.value);
+  const query = normalize(els.q.value);
   const developer = els.developer.value;
   const modality = els.modality.value;
   const status = els.status.value;
 
-  filtered = allModels.filter(m => {
-    if (developer && m.developerName !== developer) return false;
-    if (modality && m.modality !== modality) return false;
-    if (status && m.status !== status) return false;
+  filteredModels = allModels.filter(model => {
+    if (developer && model.developerName !== developer) return false;
+    if (modality && model.modality !== modality) return false;
+    if (status && model.status !== status) return false;
 
-    if (q) {
-      const parts = [];
-      if (m.name) parts.push(m.name);
-      if (m.developerName) parts.push(m.developerName);
-      if (Array.isArray(m.tags)) parts.push(m.tags.join(" "));
-      if (m.notes) parts.push(m.notes);
-      const hay = normalize(parts.join(" "));
-      if (!hay.includes(q)) return false;
+    if (query) {
+      const searchableText = [
+        model.name,
+        model.developerName,
+        Array.isArray(model.tags) ? model.tags.join(" ") : "",
+        model.notes
+      ].filter(Boolean).join(" ");
+
+      if (!normalize(searchableText).includes(query)) return false;
     }
+
     return true;
   });
 
@@ -227,70 +238,66 @@ function applyFilters() {
   render();
 }
 
-function valForSortNum(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+function numericSortValue(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : Number.POSITIVE_INFINITY;
+}
+
+function releaseSortValue(model) {
+  if (!model || !model.releaseDate) return Number.NEGATIVE_INFINITY;
+
+  const time = new Date(model.releaseDate).getTime();
+  return Number.isFinite(time) ? time : Number.NEGATIVE_INFINITY;
 }
 
 function applySort() {
-  const s = els.sort.value;
-
+  const sortValue = els.sort.value;
   const byName = (a, b) => String(a.name || "").localeCompare(String(b.name || ""), "de");
-  const rel = (x) => {
-  if (!x || !x.releaseDate) return Number.POSITIVE_INFINITY;
-  const t = new Date(x.releaseDate).getTime();
-  return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
-	};
-	const byRelease = (a, b) => rel(a) - rel(b);
-  const byIn = (a, b) => valForSortNum(a.inputCostPer1MTokens) - valForSortNum(b.inputCostPer1MTokens);
-  const byOut = (a, b) => valForSortNum(a.outputCostPer1MTokens) - valForSortNum(b.outputCostPer1MTokens);
+  const byRelease = (a, b) => releaseSortValue(a) - releaseSortValue(b);
+  const byInputCost = (a, b) => numericSortValue(a.inputCostPer1MTokens) - numericSortValue(b.inputCostPer1MTokens);
+  const byOutputCost = (a, b) => numericSortValue(a.outputCostPer1MTokens) - numericSortValue(b.outputCostPer1MTokens);
 
-  const map = {
+  const sorters = {
     "name-asc": (a, b) => byName(a, b),
     "name-desc": (a, b) => byName(b, a),
     "release-asc": (a, b) => byRelease(a, b),
     "release-desc": (a, b) => byRelease(b, a),
-    "in-asc": (a, b) => byIn(a, b),
-    "in-desc": (a, b) => byIn(b, a),
-    "out-asc": (a, b) => byOut(a, b),
-    "out-desc": (a, b) => byOut(b, a)
+    "in-asc": (a, b) => byInputCost(a, b),
+    "in-desc": (a, b) => byInputCost(b, a),
+    "out-asc": (a, b) => byOutputCost(a, b),
+    "out-desc": (a, b) => byOutputCost(b, a)
   };
 
-  filtered.sort(map[s] || map["name-asc"]);
+  filteredModels.sort(sorters[sortValue] || sorters["name-asc"]);
 }
 
 function renderTableHeader() {
   els.thead.innerHTML = `
     <tr>
-      ${activeColumns.map(c => {
-        const cls = c.type === "right" ? "right" : "";
-        return `<th class="${cls}">${escapeHtml(c.label)}</th>`;
-      }).join("")}
+      ${activeColumns.map(column => `<th>${escapeHtml(column.label)}</th>`).join("")}
     </tr>
   `;
 }
 
 function render() {
-  els.countLabel.textContent = `${filtered.length} Modelle`;
-  els.emptyState.hidden = filtered.length !== 0;
+  els.countLabel.textContent = `${filteredModels.length} Modelle`;
+  els.emptyState.hidden = filteredModels.length !== 0;
 
-  els.rows.innerHTML = filtered.map(m => {
-    const tds = activeColumns.map(c => {
-      const cls = c.type === "right" ? "right" : "";
-      const label = c.label;
-      const content = c.cell(m) || "";
-      return `<td class="${cls}" data-label="${escapeHtml(label)}">${content}</td>`;
+  els.rows.innerHTML = filteredModels.map(model => {
+    const cells = activeColumns.map(column => {
+      const content = column.cell(model) || "";
+      return `<td data-label="${escapeHtml(column.label)}">${content}</td>`;
     }).join("");
 
-    return `<tr data-id="${escapeHtml(m.id || "")}" tabindex="0" role="button" aria-label="Details Ã¶ffnen">${tds}</tr>`;
+    return `<tr data-id="${escapeHtml(model.id || "")}" tabindex="0" role="button" aria-label="Details öffnen">${cells}</tr>`;
   }).join("");
 
-  for (const tr of els.rows.querySelectorAll("tr")) {
-    tr.addEventListener("click", () => openDetails(tr.dataset.id));
-    tr.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        openDetails(tr.dataset.id);
+  for (const row of els.rows.querySelectorAll("tr")) {
+    row.addEventListener("click", () => openDetails(row.dataset.id));
+    row.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDetails(row.dataset.id);
       }
     });
   }
@@ -298,71 +305,73 @@ function render() {
 
 function linkChip(label, url) {
   if (!url) return "";
-  const safe = escapeHtml(url);
-  return `<a class="link" href="${safe}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`;
+
+  const safeUrl = escapeHtml(url);
+  return `<a class="link" href="${safeUrl}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`;
 }
 
 function addKV(rows, label, value) {
   if (value === null || value === undefined) return;
   if (typeof value === "string" && value.trim() === "") return;
+
   rows.push(`<div class="k">${escapeHtml(label)}</div><div class="v">${escapeHtml(String(value))}</div>`);
 }
 
 function openDetails(id) {
-  const m = allModels.find(x => String(x.id || "") === String(id || ""));
-  if (!m) return;
+  const model = allModels.find(item => String(item.id || "") === String(id || ""));
+  if (!model) return;
 
-  d.logo.innerHTML = m.developerLogoUrl
-    ? `<img src="${escapeHtml(m.developerLogoUrl)}" alt="" onerror="this.style.display='none'">`
+  detailEls.logo.innerHTML = model.developerLogoUrl
+    ? `<img src="${escapeHtml(model.developerLogoUrl)}" alt="" onerror="this.style.display='none'">`
     : "";
 
-  d.name.textContent = m.name || "";
-  d.dev.textContent = m.developerName || "";
+  detailEls.name.textContent = model.name || "";
+  detailEls.dev.textContent = model.developerName || "";
 
   const rows = [];
-  addKV(rows, "ModalitÃ¤t", m.modality);
-  addKV(rows, "Status", m.status);
-  addKV(rows, "Kontextfenster", fmtInt(m.contextWindow) ?? null);
-  addKV(rows, "Kosten Input", fmtMoney(m.inputCostPer1MTokens) ?? null);
-  addKV(rows, "Kosten Output", fmtMoney(m.outputCostPer1MTokens) ?? null);
-  addKV(rows, "Release", fmtDate(m.releaseDate) ?? null);
-  addKV(rows, "Letztes Update", fmtDate(m.updatedAt) ?? null);
+  addKV(rows, "Modalität", model.modality);
+  addKV(rows, "Status", model.status);
+  addKV(rows, "Kontextfenster", fmtInt(model.contextWindow) ?? null);
+  addKV(rows, "Kosten Input", fmtMoney(model.inputCostPer1MTokens) ?? null);
+  addKV(rows, "Kosten Output", fmtMoney(model.outputCostPer1MTokens) ?? null);
+  addKV(rows, "Release", fmtDate(model.releaseDate) ?? null);
+  addKV(rows, "Letztes Update", fmtDate(model.updatedAt) ?? null);
 
-  if (Array.isArray(m.tags) && m.tags.length) addKV(rows, "Tags", m.tags.join(", "));
-
-  d.kv.innerHTML = rows.join("");
-  if (!rows.length) d.kv.innerHTML = `<div class="muted small">Keine Detailfelder vorhanden.</div>`;
-
-  if (m.notes) {
-    d.notesWrap.hidden = false;
-    d.notes.textContent = m.notes;
-  } else {
-    d.notesWrap.hidden = true;
-    d.notes.textContent = "";
+  if (Array.isArray(model.tags) && model.tags.length) {
+    addKV(rows, "Tags", model.tags.join(", "));
   }
 
-  const links = [
-    linkChip("Website", m.websiteUrl),
-    linkChip("Docs", m.docsUrl),
-    linkChip("Pricing", m.pricingUrl)
-  ].filter(Boolean).join("");
+  detailEls.kv.innerHTML = rows.join("") || `<div class="muted small">Keine Detailfelder vorhanden.</div>`;
 
-  d.links.innerHTML = links;
+  if (model.notes) {
+    detailEls.notesWrap.hidden = false;
+    detailEls.notes.textContent = model.notes;
+  } else {
+    detailEls.notesWrap.hidden = true;
+    detailEls.notes.textContent = "";
+  }
+
+  detailEls.links.innerHTML = [
+    linkChip("Website", model.websiteUrl),
+    linkChip("Docs", model.docsUrl),
+    linkChip("Pricing", model.pricingUrl)
+  ].filter(Boolean).join("");
 
   els.detailDialog.showModal();
 }
 
 function reset() {
   els.q.value = "";
-  if (els.developer) els.developer.value = "";
-  if (els.modality) els.modality.value = "";
-  if (els.status) els.status.value = "";
-  if (els.sort) els.sort.value = "release-desc";
+  els.developer.value = "";
+  els.modality.value = "";
+  els.status.value = "";
+  els.sort.value = "release-desc";
   applyFilters();
 }
 
 function fillTokenCalculator(models) {
   if (!els.calcModelSearch || !els.calcModelMenu) return;
+
   tokenCalcModels = models
     .slice()
     .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "de"));
@@ -373,11 +382,13 @@ function fillTokenCalculator(models) {
 }
 
 function getTokenCalcMatches(query) {
-  const q = normalize(query);
-  if (!q) return tokenCalcModels;
-  return tokenCalcModels
-    .filter(m => normalize(`${m.name || ""} ${m.developerName || ""} ${m.id || ""}`).includes(q))
-    ;
+  const normalizedQuery = normalize(query);
+  if (!normalizedQuery) return tokenCalcModels;
+
+  return tokenCalcModels.filter(model => {
+    const searchableText = `${model.name || ""} ${model.developerName || ""} ${model.id || ""}`;
+    return normalize(searchableText).includes(normalizedQuery);
+  });
 }
 
 function renderTokenCalcMenu(query, forceShow = false) {
@@ -390,20 +401,26 @@ function renderTokenCalcMenu(query, forceShow = false) {
     return;
   }
 
-  els.calcModelMenu.innerHTML = matches
-    .map((m) => {
-      const name = escapeHtml(m.name || "Unbenanntes Modell");
-      const dev = escapeHtml(m.developerName || "Unbekannt");
-      return `<button type="button" class="calc-menu-item" data-model-id="${escapeHtml(String(m.id || ""))}"><span class="calc-menu-name">${name}</span><span class="calc-menu-dev">${dev}</span></button>`;
-    })
-    .join("");
+  els.calcModelMenu.innerHTML = matches.map(model => {
+    const name = escapeHtml(model.name || "Unbenanntes Modell");
+    const developer = escapeHtml(model.developerName || "Unbekannt");
+    const id = escapeHtml(String(model.id || ""));
 
-  for (const btn of els.calcModelMenu.querySelectorAll(".calc-menu-item")) {
-    btn.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      const id = btn.dataset.modelId;
-      const selected = tokenCalcModels.find(m => String(m.id || "") === String(id || ""));
+    return `
+      <button type="button" class="calc-menu-item" data-model-id="${id}">
+        <span class="calc-menu-name">${name}</span>
+        <span class="calc-menu-dev">${developer}</span>
+      </button>
+    `;
+  }).join("");
+
+  for (const button of els.calcModelMenu.querySelectorAll(".calc-menu-item")) {
+    button.addEventListener("mousedown", event => {
+      event.preventDefault();
+
+      const selected = tokenCalcModels.find(model => String(model.id || "") === String(button.dataset.modelId || ""));
       if (!selected || !els.calcModelSearch) return;
+
       els.calcModelSearch.value = selected.name || "";
       els.calcModelMenu.hidden = true;
       updateTokenCalculator();
@@ -414,21 +431,20 @@ function renderTokenCalcMenu(query, forceShow = false) {
 }
 
 function findTokenCalcModel(query) {
-  if (!tokenCalcModels.length) return null;
-  if (!query) return null;
+  if (!tokenCalcModels.length || !query) return null;
 
-  const q = normalize(query);
-  return tokenCalcModels.find(m => normalize(m.name) === q)
-    || tokenCalcModels.find(m => normalize(m.id) === q)
-    || tokenCalcModels.find(m => normalize(m.name).includes(q))
-    || tokenCalcModels.find(m => normalize(m.developerName).includes(q))
+  const normalizedQuery = normalize(query);
+  return tokenCalcModels.find(model => normalize(model.name) === normalizedQuery)
+    || tokenCalcModels.find(model => normalize(model.id) === normalizedQuery)
+    || tokenCalcModels.find(model => normalize(model.name).includes(normalizedQuery))
+    || tokenCalcModels.find(model => normalize(model.developerName).includes(normalizedQuery))
     || null;
 }
 
 function updateTokenCalculator() {
   if (!els.calcModelSearch || !els.calcResult) return;
-  const query = els.calcModelSearch.value;
-  const model = findTokenCalcModel(query);
+
+  const model = findTokenCalcModel(els.calcModelSearch.value);
   if (!model) {
     els.calcResult.textContent = "Bitte zuerst ein Modell auswählen.";
     return;
@@ -441,12 +457,13 @@ function updateTokenCalculator() {
 
   const inputCost = Number.isFinite(inputPrice) ? (inputTokens / 1_000_000) * inputPrice : 0;
   const outputCost = Number.isFinite(outputPrice) ? (outputTokens / 1_000_000) * outputPrice : 0;
-  const total = inputCost + outputCost;
+  const totalCost = inputCost + outputCost;
 
   const inputLabel = `Input: ${fmtCurrency(inputCost) ?? "-"}`;
   const outputLabel = `Output: ${fmtCurrency(outputCost) ?? "-"}`;
-  const totalLabel = `Gesamt: ${fmtCurrency(total) ?? "-"}`;
-  const modelLabel = `${model.name || "Unbenanntes Modell"}`;
+  const totalLabel = `Gesamt: ${fmtCurrency(totalCost) ?? "-"}`;
+  const modelLabel = model.name || "Unbenanntes Modell";
+
   els.calcResult.textContent = `${totalLabel} (${inputLabel}, ${outputLabel}) - ${modelLabel}`;
 }
 
@@ -458,28 +475,30 @@ function hideControlIfMissing() {
 
 async function load() {
   try {
-    const res = await fetch("models.json", { cache: "no-store" });
-    if (!res.ok) throw new Error("models.json konnte nicht geladen werden.");
-    const data = await res.json();
+    const response = await fetch("models.json", { cache: "no-store" });
+    if (!response.ok) throw new Error("models.json konnte nicht geladen werden.");
+
+    const data = await response.json();
     if (!Array.isArray(data)) throw new Error("models.json muss ein Array sein.");
 
     allModels = data;
-
     activeColumns = getActiveColumns(allModels);
     renderTableHeader();
 
     const sortOptions = buildSortOptions(activeColumns);
-    els.sort.innerHTML = sortOptions.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join("");
+    els.sort.innerHTML = sortOptions
+      .map(option => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
+      .join("");
     els.sort.value = "release-desc";
 
     fillDeveloperFilter(allModels);
     fillTokenCalculator(allModels);
     hideControlIfMissing();
     reset();
-  } catch (e) {
+  } catch (error) {
     els.countLabel.textContent = "Fehler beim Laden";
     els.emptyState.hidden = false;
-    els.emptyState.textContent = String(e.message || e);
+    els.emptyState.textContent = String(error.message || error);
   }
 }
 
@@ -493,6 +512,7 @@ function wire() {
     render();
   });
   els.resetBtn.addEventListener("click", reset);
+
   els.calcModelSearch?.addEventListener("input", () => {
     renderTokenCalcMenu(els.calcModelSearch?.value || "", true);
     updateTokenCalculator();
@@ -502,8 +522,7 @@ function wire() {
   });
   els.calcModelSearch?.addEventListener("blur", () => {
     window.setTimeout(() => {
-      if (!els.calcModelMenu) return;
-      els.calcModelMenu.hidden = true;
+      if (els.calcModelMenu) els.calcModelMenu.hidden = true;
     }, 120);
   });
   els.calcInputTokens?.addEventListener("input", updateTokenCalculator);
@@ -512,28 +531,3 @@ function wire() {
 
 wire();
 load();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
