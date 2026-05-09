@@ -1,78 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
   <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Platform</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Webtools</title>
+    <meta name="description" content="Eine kleine Sammlung von Webtools: LLM Archiv und Zeit Dashboard." />
     <meta name="color-scheme" content="dark" />
+    <link rel="stylesheet" href="styles.css" />
   </head>
-
   <body>
+    <main class="home">
+      <section class="hero" aria-labelledby="pageTitle">
+        <h1 id="pageTitle">Webtools</h1>
+        <p>Eine kleine Sammlung nützlicher Dashboards und Experimente.</p>
+      </section>
 
+      <section class="tool-grid" aria-label="Verfügbare Tools">
+        <a class="tool-card" href="llm-archive/index.html">
+          <h2>LLM Archiv</h2>
+          <p>Modelle durchsuchen, filtern, sortieren und Tokenkosten grob berechnen.</p>
+          <span>Öffnen</span>
+        </a>
 
-    <style>
-      .container {
-        display: flex;
-        justify-content: center; 
-        align-items: center;     
-        height: 100vh;          
-        gap: 10px;               
-      }
-      .button {
-        position: relative;
-        width: 120px;
-        height: 40px;
-        background-color: #000;
-        display: flex;
-        align-items: center;
-        color: white;
-        flex-direction: column;
-        justify-content: center;
-        border: none;
-        padding: 12px;
-        gap: 12px;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-      .button::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        left: -4px;
-        top: -1px;
-        margin: auto;
-        width: 128px;
-        height: 48px;
-        border-radius: 10px;
-        background: linear-gradient(-45deg, #e81cff 0%, #40c9ff 100% );
-        z-index: -10;
-        pointer-events: none;
-        transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      }
-      .button::after {
-        content: "";
-        z-index: -1;
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(-45deg, #fc00ff 0%, #00dbde 100% );
-        transform: translate3d(0, 0, 0) scale(0.95);
-        filter: blur(20px);
-      }
-      .button:hover::after {
-        filter: blur(30px);
-      }
-
-      .button:hover::before {
-        transform: rotate(-180deg);
-      }
-
-      .button:active::before {
-        scale: 0.7;
-      }
-    </style>
-    <div class="container">
-      <button onclick="window.location.href='llm-archive/index.html'" class="button">LLM Archiv</button>
-      <button onclick="window.location.href='zeit-dashboard.html'" class="button">Zeit Dashboard</button>
-    </div>
-        
+        <a class="tool-card" href="zeit-dashboard.html">
+          <h2>Zeit Dashboard</h2>
+          <p>Aktuelle Zeit mit mehreren Zeitquellen, Statusanzeige und lokalem Fallback.</p>
+          <span>Öffnen</span>
+        </a>
+      </section>
+    </main>
   </body>
+</html>
