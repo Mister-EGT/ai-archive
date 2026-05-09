@@ -4,7 +4,7 @@ Eine kleine Sammlung von Webtools und Dashboards.
 
 ## Inhalt
 
-Diese Repository enthält aktuell folgende Seiten:
+Dieses Repository enthält aktuell folgende Seiten:
 
 | Seite | Beschreibung |
 |---|---|
@@ -41,8 +41,14 @@ Funktionen:
 
 ```text
 .
+├── .editorconfig
+├── .gitignore
+├── README.md
 ├── index.html
+├── styles.css
 ├── zeit-dashboard.html
+├── zeit-dashboard.css
+├── zeit-dashboard.js
 └── llm-archive/
     ├── index.html
     ├── styles.css
@@ -67,9 +73,12 @@ Danach kann die Seite im Browser geöffnet werden:
 http://localhost:8000
 ```
 
-## Hinweise zu den Modelldaten
+## Wartung
 
-Die Daten im LLM Archiv können sich ändern, zum Beispiel Preise, Kontextfenster oder Verfügbarkeit einzelner Modelle. Deshalb sollten die Einträge in `models.json` regelmäßig geprüft und aktualisiert werden.
+- HTML, CSS und JavaScript sollten möglichst getrennt bleiben.
+- Neue Tools sollten über die Startseite verlinkt werden.
+- Modelldaten in `llm-archive/models.json` sollten regelmäßig geprüft werden, da sich Preise, Kontextfenster und Verfügbarkeit ändern können.
+- Die `.editorconfig` sorgt für einheitliche Formatierung in Editoren.
 
 ## Status
 
