@@ -1,0 +1,2096 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Neuronale Netzwerke: Enterprise 3D Analyse</title>
+  <meta name="description" content="Statische Enterprise Analyseoberfläche zur 3D Visualisierung und Simulation neuronaler Netzwerke." />
+  <style>
+    :root {
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-alt: #f9fafc;
+      --surface-muted: #eef2f7;
+      --surface-strong: #e7ecf3;
+      --text: #101828;
+      --text-soft: #344054;
+      --muted: #667085;
+      --line: #d7dde7;
+      --line-strong: #b8c2d2;
+      --primary: #164b93;
+      --primary-strong: #0d356f;
+      --primary-soft: #e8f1ff;
+      --good: #16794c;
+      --warn: #a15c00;
+      --bad: #b42318;
+      --shadow: 0 12px 32px rgba(16, 24, 40, 0.08);
+      --radius: 10px;
+      --radius-sm: 6px;
+      --focus: rgba(22, 75, 147, 0.22);
+      color-scheme: light;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #0f141d;
+      --surface: #161d29;
+      --surface-alt: #111827;
+      --surface-muted: #1d2735;
+      --surface-strong: #253246;
+      --text: #f2f4f7;
+      --text-soft: #cbd5e1;
+      --muted: #98a2b3;
+      --line: #334155;
+      --line-strong: #475569;
+      --primary: #8bb8ff;
+      --primary-strong: #c5d9ff;
+      --primary-soft: rgba(139, 184, 255, 0.14);
+      --good: #74d69a;
+      --warn: #f6c36a;
+      --bad: #ff9b92;
+      --shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+      color-scheme: dark;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0) 320px),
+        radial-gradient(circle at 15% 0%, rgba(22, 75, 147, 0.08), transparent 340px),
+        var(--bg);
+    }
+    body[data-theme="dark"]::before {
+      background:
+        linear-gradient(180deg, rgba(15,20,29,0.84), rgba(15,20,29,0) 320px),
+        radial-gradient(circle at 12% 0%, rgba(139,184,255,0.10), transparent 360px),
+        var(--bg);
+    }
+    a { color: inherit; }
+    button, input, select { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    canvas { display: block; max-width: 100%; }
+
+    .app-shell {
+      width: min(1680px, calc(100vw - clamp(20px, 4vw, 56px)));
+      margin: 0 auto;
+      padding: 18px 0 56px;
+    }
+
+    .topbar {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background:
+        linear-gradient(135deg, var(--primary-strong), var(--primary)),
+        var(--primary);
+      position: relative;
+      box-shadow: 0 8px 18px rgba(22,75,147,0.18);
+      flex: 0 0 auto;
+    }
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      border-radius: 99px;
+      background: #fff;
+      opacity: 0.92;
+    }
+    .brand-mark::before { width: 18px; height: 3px; left: 9px; top: 12px; }
+    .brand-mark::after { width: 12px; height: 3px; left: 9px; top: 21px; }
+    .brand-title {
+      min-width: 0;
+    }
+    .brand-title strong {
+      display: block;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .brand-title span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .environment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      background: var(--surface);
+      color: var(--text-soft);
+      font-size: 12px;
+      font-weight: 750;
+      box-shadow: 0 1px 0 rgba(16,24,40,0.02);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: var(--good);
+      box-shadow: 0 0 0 4px rgba(22, 121, 76, 0.12);
+    }
+
+    .btn {
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--text);
+      min-height: 36px;
+      padding: 0 13px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      font-weight: 750;
+      font-size: 13px;
+      transition: background .16s ease, border-color .16s ease, transform .12s ease, color .16s ease;
+    }
+    .btn:hover:not(:disabled) { background: var(--surface-alt); border-color: var(--primary); }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .btn:disabled { opacity: .52; cursor: not-allowed; }
+    .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    body[data-theme="dark"] .btn.primary { color: #0b1220; }
+    .btn.primary:hover:not(:disabled) { background: var(--primary-strong); border-color: var(--primary-strong); }
+    .btn.ghost { background: transparent; }
+
+    .overview {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(360px, .8fr);
+      gap: 18px;
+      margin: 12px 0 18px;
+      align-items: stretch;
+    }
+    .summary-card, .panel, .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .summary-card {
+      padding: clamp(20px, 2.5vw, 30px);
+      min-height: 220px;
+      display: grid;
+      align-content: center;
+      gap: 18px;
+    }
+    .kicker {
+      color: var(--primary);
+      font-size: 12px;
+      line-height: 1.2;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-weight: 850;
+    }
+    h1 {
+      margin: 0;
+      max-width: 840px;
+      font-size: clamp(30px, 3.8vw, 56px);
+      line-height: 1.04;
+      letter-spacing: -0.045em;
+      font-weight: 850;
+    }
+    .lead {
+      margin: 0;
+      max-width: 850px;
+      color: var(--muted);
+      font-size: clamp(15px, 1.15vw, 18px);
+      line-height: 1.65;
+    }
+    .summary-aside {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+    .metric-card {
+      padding: 16px;
+      min-width: 0;
+      box-shadow: none;
+    }
+    .metric-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 850;
+      letter-spacing: .08em;
+      margin-bottom: 8px;
+    }
+    .metric-card strong {
+      display: block;
+      font-size: clamp(20px, 2.1vw, 30px);
+      letter-spacing: -0.04em;
+      line-height: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .metric-card small {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(280px, 350px) minmax(0, 1fr) minmax(280px, 350px);
+      gap: 18px;
+      align-items: start;
+    }
+    .panel {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .panel-header {
+      min-height: 54px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--surface), var(--surface-alt));
+    }
+    .panel-title { min-width: 0; }
+    .panel-title h2,
+    .panel-title h3 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+    .panel-title p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .panel-body { padding: 16px; }
+    .stack { display: grid; gap: 14px; }
+    .section-label {
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-weight: 850;
+      color: var(--muted);
+      margin: 6px 0 2px;
+    }
+    .field { display: grid; gap: 7px; min-width: 0; }
+    .field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    label {
+      color: var(--text-soft);
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.25;
+    }
+    input, select {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      padding: 0 10px;
+      outline: none;
+    }
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--primary);
+      min-height: 26px;
+    }
+    input:focus, select:focus, button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 1px;
+      border-color: var(--primary);
+    }
+    input:disabled, select:disabled {
+      opacity: .64;
+      cursor: not-allowed;
+      background: var(--surface-muted);
+    }
+    input[readonly] {
+      background: var(--surface-alt);
+      color: var(--muted);
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .preset {
+      min-height: 34px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--surface-alt);
+      color: var(--text-soft);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .preset:hover:not(:disabled) { border-color: var(--primary); color: var(--primary-strong); }
+    .preset:disabled { opacity: .5; cursor: not-allowed; }
+    .range-output {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .range-output strong {
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .main-stage {
+      display: grid;
+      gap: 18px;
+      min-width: 0;
+    }
+    .stage-toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .scene-frame {
+      position: relative;
+      min-height: clamp(430px, 52vh, 680px);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.48)),
+        linear-gradient(var(--surface-strong) 1px, transparent 1px),
+        linear-gradient(90deg, var(--surface-strong) 1px, transparent 1px),
+        var(--surface-alt);
+      background-size: auto, 42px 42px, 42px 42px, auto;
+      overflow: hidden;
+    }
+    body[data-theme="dark"] .scene-frame {
+      background:
+        linear-gradient(180deg, rgba(17,24,39,.84), rgba(17,24,39,.46)),
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px),
+        var(--surface-alt);
+    }
+    #network3d {
+      position: absolute;
+      inset: 0;
+      min-height: 100%;
+      touch-action: none;
+    }
+    .scene-frame canvas {
+      width: 100% !important;
+      height: 100% !important;
+      cursor: grab;
+    }
+    .scene-frame canvas.is-dragging { cursor: grabbing; }
+    .scene-frame canvas.is-interactive { cursor: pointer; }
+    .scene-overlay {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      right: 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .overlay-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 100%;
+      min-height: 32px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      background: color-mix(in srgb, var(--surface) 86%, transparent);
+      color: var(--text-soft);
+      font-size: 12px;
+      font-weight: 750;
+      box-shadow: 0 8px 18px rgba(16,24,40,0.08);
+      backdrop-filter: blur(8px);
+    }
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .legend-item::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 99px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -1px;
+      background: var(--primary);
+    }
+    .legend-item.negative::before { background: var(--bad); }
+    .legend-item.activation::before { background: var(--good); }
+    .webgl-warning {
+      position: absolute;
+      inset: auto 16px 16px 16px;
+      z-index: 6;
+      display: none;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text-soft);
+      font-size: 13px;
+      line-height: 1.45;
+      box-shadow: var(--shadow);
+    }
+    .webgl-warning.is-visible { display: block; }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+    .chart-box {
+      min-height: 310px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    .chart-canvas-wrap {
+      min-height: 250px;
+      position: relative;
+      background: var(--surface-alt);
+    }
+    .chart-canvas-wrap canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .inspector-list {
+      display: grid;
+      gap: 10px;
+    }
+    .kv {
+      display: grid;
+      grid-template-columns: minmax(95px, .7fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: baseline;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .kv:last-child { border-bottom: 0; }
+    .kv span { color: var(--muted); font-weight: 750; }
+    .kv strong, .kv code {
+      min-width: 0;
+      color: var(--text);
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .input-vector {
+      display: grid;
+      gap: 10px;
+    }
+    .input-row {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+    .input-row span {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+    .output-stack {
+      display: grid;
+      gap: 8px;
+    }
+    .output-line {
+      display: grid;
+      grid-template-columns: 60px minmax(0, 1fr) 62px;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+    .bar {
+      height: 8px;
+      border-radius: 99px;
+      background: var(--surface-muted);
+      overflow: hidden;
+    }
+    .bar i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      border-radius: inherit;
+    }
+    .log {
+      min-height: 150px;
+      max-height: 220px;
+      overflow: auto;
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--text-soft);
+      background: var(--surface-alt);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+    }
+    .log-entry {
+      display: grid;
+      grid-template-columns: 64px minmax(0,1fr);
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+    .log-entry:last-child { border-bottom: 0; padding-bottom: 0; }
+    .log-entry time { color: var(--muted); }
+
+    .footer-note {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1320px) {
+      .workspace { grid-template-columns: minmax(260px, 330px) minmax(0, 1fr); }
+      .inspector-panel { grid-column: 1 / -1; }
+      .inspector-layout {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+    }
+    @media (max-width: 1000px) {
+      .overview { grid-template-columns: 1fr; }
+      .workspace { grid-template-columns: 1fr; }
+      .control-panel { order: 2; }
+      .main-stage { order: 1; }
+      .inspector-panel { order: 3; }
+      .chart-grid { grid-template-columns: 1fr; }
+      .inspector-layout { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 680px) {
+      .app-shell { width: min(100% - 24px, 1680px); padding-top: 10px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .topbar-actions { width: 100%; justify-content: flex-start; }
+      .summary-aside { grid-template-columns: 1fr 1fr; }
+      .field-row { grid-template-columns: 1fr; }
+      .control-grid { grid-template-columns: 1fr; }
+      .stage-toolbar { justify-content: flex-start; }
+      .scene-frame { min-height: 380px; }
+      .scene-overlay { flex-direction: column; align-items: flex-start; }
+      .legend { justify-content: flex-start; }
+      .inspector-layout { grid-template-columns: 1fr; }
+      .kv { grid-template-columns: 1fr; gap: 3px; }
+      .kv strong, .kv code { text-align: left; }
+    }
+    @media (max-width: 440px) {
+      .summary-aside { grid-template-columns: 1fr; }
+      h1 { font-size: 29px; }
+      .panel-header { align-items: flex-start; flex-direction: column; }
+      .scene-frame { min-height: 330px; }
+      .output-line { grid-template-columns: 52px minmax(0, 1fr) 54px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Produktname">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-title">
+          <strong>Neural Model Workbench</strong>
+          <span>Enterprise 3D Analyse für neuronale Netzwerke</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="environment-badge"><i class="status-dot" aria-hidden="true"></i><span id="runtimeState">Bereit</span></div>
+        <button class="btn ghost" type="button" id="themeToggle">Dunkelmodus</button>
+      </div>
+    </header>
+
+    <section class="overview" aria-label="Übersicht">
+      <article class="summary-card">
+        <div class="kicker">Modellvisualisierung</div>
+        <h1>Neuronale Netzwerke als interaktive 3D Architektur analysieren.</h1>
+        <p class="lead">Diese statische Webapp zeigt Layer, Neuronen, Aktivierungen und Gewichte in einer nüchternen Enterprise Oberfläche. Architektur, Trainingsdaten und Eingabevektor reagieren dynamisch auf deine Einstellungen.</p>
+      </article>
+      <aside class="summary-aside" aria-label="Kennzahlen">
+        <div class="metric-card"><span>Architektur</span><strong id="metricArch">2 → 6 → 4 → 1</strong><small>Layer werden live neu aufgebaut.</small></div>
+        <div class="metric-card"><span>Parameter</span><strong id="metricParams">0</strong><small>Gewichte und Biases.</small></div>
+        <div class="metric-card"><span>Loss</span><strong id="metricLoss">0.000</strong><small>Mittlerer quadratischer Fehler.</small></div>
+        <div class="metric-card"><span>Accuracy</span><strong id="metricAcc">0%</strong><small>Gemessen auf dem aktuellen Datensatz.</small></div>
+      </aside>
+    </section>
+
+    <main class="workspace">
+      <aside class="panel control-panel" aria-label="Modellkonfiguration">
+        <div class="panel-header">
+          <div class="panel-title">
+            <h2>Konfiguration</h2>
+            <p>Architektur, Daten und Optimierung.</p>
+          </div>
+        </div>
+        <div class="panel-body stack">
+          <div class="section-label">Architektur</div>
+          <div class="field-row">
+            <div class="field">
+              <label for="inputCount">Eingaben</label>
+              <select id="inputCount">
+                <option value="2">2 Features</option>
+                <option value="3">3 Features</option>
+                <option value="4">4 Features</option>
+                <option value="5">5 Features</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="outputCount">Ausgaben</label>
+              <select id="outputCount">
+                <option value="1">1 Output</option>
+                <option value="2">2 Outputs</option>
+                <option value="3">3 Outputs</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="hiddenLayers">Hidden Layer</label>
+            <input id="hiddenLayers" value="6, 4" inputmode="text" autocomplete="off" />
+            <div class="hint">Kommagetrennte Werte, zum Beispiel 8, 6, 4. Maximal 6 Layer mit je 18 Neuronen.</div>
+          </div>
+          <div class="control-grid" aria-label="Architektur Vorlagen">
+            <button class="preset" type="button" data-preset="4">Kompakt</button>
+            <button class="preset" type="button" data-preset="8, 6">Standard</button>
+            <button class="preset" type="button" data-preset="12, 10, 6">Tief</button>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="activation">Aktivierung</label>
+              <select id="activation">
+                <option value="sigmoid">Sigmoid</option>
+                <option value="tanh">Tanh</option>
+                <option value="relu">ReLU</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="dataset">Datensatz</label>
+              <select id="dataset">
+                <option value="xor">XOR</option>
+                <option value="circle">Kreis</option>
+                <option value="bands">Bänder</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="section-label">Training</div>
+          <div class="field">
+            <label for="learningRate">Lernrate</label>
+            <input id="learningRate" type="range" min="0.005" max="0.35" step="0.005" value="0.08" />
+            <div class="range-output"><span>Schrittweite</span><strong id="learningRateOut">0.080</strong></div>
+          </div>
+          <div class="field">
+            <label for="noise">Datenrauschen</label>
+            <input id="noise" type="range" min="0" max="0.34" step="0.01" value="0.08" />
+            <div class="range-output"><span>Streuung</span><strong id="noiseOut">0.08</strong></div>
+          </div>
+          <div class="field-row">
+            <button class="btn primary" type="button" id="trainToggle">Training starten</button>
+            <button class="btn" type="button" id="singleStep">Ein Schritt</button>
+          </div>
+          <div class="field-row">
+            <button class="btn" type="button" id="rebuildBtn">Netz neu bauen</button>
+            <button class="btn" type="button" id="resetDataBtn">Daten neu laden</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="main-stage" aria-label="3D Analysebereich">
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <h2>3D Netzwerk Simulation</h2>
+              <p>Drag zum Drehen, Mausrad zum Zoomen, Klick auf ein Neuron für Details.</p>
+            </div>
+            <div class="stage-toolbar">
+              <button class="btn" type="button" id="fitViewBtn">Ansicht zentrieren</button>
+              <button class="btn" type="button" id="forwardBtn">Forward Pass</button>
+            </div>
+          </div>
+          <div class="scene-frame" id="sceneFrame">
+            <div id="network3d" role="img" aria-label="Dreidimensionale Visualisierung der Netzwerkarchitektur"></div>
+            <div class="scene-overlay">
+              <div class="overlay-chip"><i class="status-dot" aria-hidden="true"></i><span id="sceneStatus">3D Szene initialisiert</span></div>
+              <div class="legend">
+                <span class="overlay-chip legend-item">positives Gewicht</span>
+                <span class="overlay-chip legend-item negative">negatives Gewicht</span>
+                <span class="overlay-chip legend-item activation">Aktivierung</span>
+              </div>
+            </div>
+            <div class="webgl-warning" id="webglWarning">Three.js oder WebGL konnte nicht gestartet werden. Die Simulation läuft weiter, aber die 3D Darstellung ist in diesem Browser nicht verfügbar.</div>
+          </div>
+        </section>
+
+        <section class="chart-grid">
+          <article class="panel chart-box">
+            <div class="panel-header">
+              <div class="panel-title"><h3>Entscheidungsfläche</h3><p>Output 0 über dem zweidimensionalen Eingaberaum.</p></div>
+            </div>
+            <div class="chart-canvas-wrap"><canvas id="decisionCanvas" aria-label="Entscheidungsfläche"></canvas></div>
+          </article>
+          <article class="panel chart-box">
+            <div class="panel-header">
+              <div class="panel-title"><h3>Loss Verlauf</h3><p>Training wird gedrosselt gezeichnet, damit die UI stabil bleibt.</p></div>
+            </div>
+            <div class="chart-canvas-wrap"><canvas id="lossCanvas" aria-label="Loss Verlauf"></canvas></div>
+          </article>
+        </section>
+      </section>
+
+      <aside class="panel inspector-panel" aria-label="Inspektor">
+        <div class="panel-header">
+          <div class="panel-title">
+            <h2>Inspektor</h2>
+            <p>Eingabe, Ausgabe und ausgewähltes Objekt.</p>
+          </div>
+        </div>
+        <div class="panel-body inspector-layout">
+          <section class="stack">
+            <div class="section-label">Eingabevektor</div>
+            <div class="input-vector" id="inputVector"></div>
+            <button class="btn" type="button" id="applyInputBtn">Eingabe anwenden</button>
+            <div class="hint">Zusätzliche Features werden für die Datensimulation automatisch aus \(x_1\) und \(x_2\) abgeleitet.</div>
+          </section>
+          <section class="stack">
+            <div class="section-label">Modellausgabe</div>
+            <div class="output-stack" id="outputStack"></div>
+            <div class="inspector-list">
+              <div class="kv"><span>Epoche</span><strong id="epochOut">0</strong></div>
+              <div class="kv"><span>Datensatz</span><strong id="datasetOut">XOR</strong></div>
+              <div class="kv"><span>Aktivierung</span><strong id="activationOut">Sigmoid</strong></div>
+            </div>
+          </section>
+          <section class="stack">
+            <div class="section-label">Auswahl</div>
+            <div class="inspector-list">
+              <div class="kv"><span>Typ</span><strong id="selectionType">keine</strong></div>
+              <div class="kv"><span>Layer</span><strong id="selectionLayer">-</strong></div>
+              <div class="kv"><span>Index</span><strong id="selectionIndex">-</strong></div>
+              <div class="kv"><span>Aktivierung</span><strong id="selectionActivation">-</strong></div>
+            </div>
+            <div class="log" id="eventLog" aria-label="Ereignisprotokoll"></div>
+          </section>
+        </div>
+      </aside>
+    </main>
+
+    <p class="footer-note">Hinweis: Diese Datei ist statisch. Die 3D Darstellung nutzt Three.js über ein CDN. Bei fehlender Internetverbindung bleibt die numerische Simulation nutzbar, aber die 3D Szene kann nicht geladen werden.</p>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const round = (value, digits = 3) => Number.isFinite(value) ? value.toFixed(digits) : '-';
+    const rand = (min, max) => min + Math.random() * (max - min);
+    const sigmoid = x => 1 / (1 + Math.exp(-clamp(x, -40, 40)));
+
+    const labels = {
+      sigmoid: 'Sigmoid',
+      tanh: 'Tanh',
+      relu: 'ReLU',
+      xor: 'XOR',
+      circle: 'Kreis',
+      bands: 'Bänder'
+    };
+
+    const el = {};
+    const state = {
+      architecture: [2, 6, 4, 1],
+      network: null,
+      data: [],
+      lossHistory: [],
+      epoch: 0,
+      training: false,
+      lastDecisionDraw: 0,
+      lastLossDraw: 0,
+      lastUiUpdate: 0,
+      inputVector: [0.35, -0.45],
+      selectedNode: null,
+      forwardPulse: 0,
+      noiseTimer: null,
+      pendingDecision: false,
+      pendingLoss: false,
+      forceDecision: false,
+      forceLoss: false,
+      resizeTimer: null,
+      reduceMotion: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    };
+
+    const ui3d = {
+      available: false,
+      initialized: false,
+      container: null,
+      scene: null,
+      camera: null,
+      renderer: null,
+      group: null,
+      nodeMeshes: [],
+      lineObjects: [],
+      raycaster: null,
+      pointer: null,
+      hovered: null,
+      hoveredLine: null,
+      hitMeshes: [],
+      drag: { active: false, x: 0, y: 0, moved: false },
+      zoom: 12,
+      minZoom: 8,
+      maxZoom: 28,
+      fitRadius: 1,
+      fitCenter: null,
+      fallbackCanvas: null,
+      fallbackCtx: null,
+      fallbackDirty: true,
+      loadingThree: false,
+      threeLoadStarted: false,
+      threeLoadFailed: false
+    };
+
+    function boot() {
+      collectElements();
+      if (!validateElements()) return;
+      state.inputVector = buildFeatureVector([0.35, -0.45], getInputCount());
+      initTheme();
+      buildInputFields();
+      generateData();
+      buildNetwork();
+      init3D();
+      bindEvents();
+      updateAll(true);
+      log('System', 'Workbench geladen');
+      setRuntime('Bereit');
+      requestAnimationFrame(mainLoop);
+    }
+
+    function collectElements() {
+      const ids = [
+        'runtimeState', 'themeToggle', 'metricArch', 'metricParams', 'metricLoss', 'metricAcc',
+        'inputCount', 'outputCount', 'hiddenLayers', 'activation', 'dataset', 'learningRate',
+        'learningRateOut', 'noise', 'noiseOut', 'trainToggle', 'singleStep', 'rebuildBtn', 'resetDataBtn',
+        'fitViewBtn', 'forwardBtn', 'sceneFrame', 'network3d', 'sceneStatus', 'webglWarning',
+        'decisionCanvas', 'lossCanvas', 'inputVector', 'applyInputBtn', 'outputStack', 'epochOut',
+        'datasetOut', 'activationOut', 'selectionType', 'selectionLayer', 'selectionIndex',
+        'selectionActivation', 'eventLog'
+      ];
+      ids.forEach(id => { el[id] = document.getElementById(id); });
+      el.presets = Array.from(document.querySelectorAll('[data-preset]'));
+    }
+
+    function validateElements() {
+      const missing = Object.keys(el).filter(key => key !== 'presets' && !el[key]);
+      if (missing.length) {
+        console.error('Fehlende Elemente:', missing.join(', '));
+        return false;
+      }
+      return true;
+    }
+
+    function initTheme() {
+      let saved = null;
+      try { saved = localStorage.getItem('nn-enterprise-theme'); } catch (error) { saved = null; }
+      const theme = saved || 'light';
+      document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+      el.themeToggle.textContent = theme === 'dark' ? 'Hellmodus' : 'Dunkelmodus';
+    }
+
+    function bindEvents() {
+      el.themeToggle.addEventListener('click', () => {
+        const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.body.setAttribute('data-theme', next);
+        try { localStorage.setItem('nn-enterprise-theme', next); } catch (error) {}
+        el.themeToggle.textContent = next === 'dark' ? 'Hellmodus' : 'Dunkelmodus';
+        update3DMaterials();
+        scheduleDecision(true);
+        scheduleLoss(true);
+      });
+
+      [el.inputCount, el.outputCount, el.activation, el.dataset].forEach(control => {
+        control.addEventListener('change', () => {
+          if (control === el.dataset) {
+            stopTraining('Datensatz geändert');
+            generateData();
+          }
+          rebuildFromControls();
+        });
+      });
+
+      el.hiddenLayers.addEventListener('change', rebuildFromControls);
+      el.hiddenLayers.addEventListener('blur', () => { el.hiddenLayers.value = parseHiddenLayers().join(', '); });
+
+      el.presets.forEach(button => {
+        button.addEventListener('click', () => {
+          if (state.training) return;
+          el.hiddenLayers.value = button.dataset.preset;
+          rebuildFromControls();
+        });
+      });
+
+      el.learningRate.addEventListener('input', () => {
+        el.learningRateOut.textContent = Number(el.learningRate.value).toFixed(3);
+      });
+
+      el.noise.addEventListener('input', () => {
+        el.noiseOut.textContent = Number(el.noise.value).toFixed(2);
+        clearTimeout(state.noiseTimer);
+        state.noiseTimer = setTimeout(() => {
+          state.noiseTimer = null;
+          stopTraining('Datenrauschen geändert');
+          generateData();
+          updateAll(true);
+          log('Daten', 'Datensatz mit neuem Rauschen erzeugt');
+        }, 160);
+      });
+      el.noise.addEventListener('change', () => {
+        el.noiseOut.textContent = Number(el.noise.value).toFixed(2);
+        if (state.noiseTimer) {
+          clearTimeout(state.noiseTimer);
+          state.noiseTimer = null;
+          stopTraining('Datenrauschen geändert');
+          generateData();
+          updateAll(true);
+          log('Daten', 'Datensatz mit neuem Rauschen erzeugt');
+        }
+      });
+
+      el.trainToggle.addEventListener('click', () => {
+        if (state.training) stopTraining('Training gestoppt');
+        else startTraining();
+      });
+      el.singleStep.addEventListener('click', () => {
+        if (state.training) return;
+        trainBatch(1);
+        updateAll(true);
+        log('Training', 'Ein Trainingsschritt ausgeführt');
+      });
+      el.rebuildBtn.addEventListener('click', rebuildFromControls);
+      el.resetDataBtn.addEventListener('click', () => {
+        stopTraining('Datensatz erneuert');
+        generateData();
+        updateAll(true);
+        log('Daten', 'Datensatz neu erzeugt');
+      });
+      el.fitViewBtn.addEventListener('click', () => {
+        if (ui3d.available) reset3DView();
+        else { ui3d.fallbackDirty = true; drawFallback3D(); log('Ansicht', 'Fallback Ansicht aktualisiert'); }
+      });
+      el.forwardBtn.addEventListener('click', () => runForwardPulse());
+      el.applyInputBtn.addEventListener('click', applyInputVector);
+
+      const handleResize = () => {
+        clearTimeout(state.resizeTimer);
+        state.resizeTimer = setTimeout(() => {
+          resize3D();
+          scheduleDecision(true);
+          scheduleLoss(true);
+          ui3d.fallbackDirty = true;
+        }, 60);
+      };
+      if (window.ResizeObserver) {
+        const ro = new ResizeObserver(handleResize);
+        ro.observe(el.sceneFrame);
+        ro.observe(el.decisionCanvas.parentElement);
+        ro.observe(el.lossCanvas.parentElement);
+      } else {
+        window.addEventListener('resize', handleResize);
+      }
+    }
+
+    function getInputCount() { return clamp(parseInt(el.inputCount.value, 10) || 2, 2, 5); }
+    function getOutputCount() { return clamp(parseInt(el.outputCount.value, 10) || 1, 1, 3); }
+    function getLearningRate() { return clamp(parseFloat(el.learningRate.value) || 0.08, 0.001, 0.5); }
+
+    function parseHiddenLayers() {
+      const raw = String(el.hiddenLayers.value || '')
+        .split(',')
+        .map(value => clamp(parseInt(value.trim(), 10) || 0, 0, 18))
+        .filter(value => value > 0)
+        .slice(0, 6);
+      return raw.length ? raw : [4];
+    }
+
+    function architectureFromControls() {
+      return [getInputCount()].concat(parseHiddenLayers(), [getOutputCount()]);
+    }
+
+    function rebuildFromControls() {
+      stopTraining('Netz neu aufgebaut');
+      state.architecture = architectureFromControls();
+      el.hiddenLayers.value = parseHiddenLayers().join(', ');
+      state.inputVector = buildFeatureVector(state.inputVector, getInputCount());
+      buildInputFields();
+      buildNetwork();
+      build3DNetwork();
+      updateAll(true);
+      log('Modell', 'Architektur neu aufgebaut');
+    }
+
+    function buildFeatureVector(base, size) {
+      const x = clamp(Number(base[0]) || 0, -1, 1);
+      const y = clamp(Number(base[1]) || 0, -1, 1);
+      const features = [x, y, x * y, x * x, y * y];
+      return features.slice(0, size);
+    }
+
+    function buildInputFields() {
+      el.inputVector.innerHTML = '';
+      state.inputVector = buildFeatureVector(state.inputVector, getInputCount());
+      state.inputVector.forEach((value, index) => {
+        const row = document.createElement('label');
+        row.className = 'input-row';
+        row.innerHTML = '<span>x' + (index + 1) + '</span><input type="number" step="0.01" min="-1" max="1" value="' + round(value, 2) + '" aria-label="Eingabewert x' + (index + 1) + '">';
+        const input = row.querySelector('input');
+        if (index >= 2) {
+          input.readOnly = true;
+          input.title = 'Abgeleitetes Feature';
+        }
+        input.addEventListener('input', () => {
+          if (index >= 2) return;
+          const next = state.inputVector.slice();
+          next[index] = clamp(parseFloat(input.value) || 0, -1, 1);
+          state.inputVector = buildFeatureVector(next, getInputCount());
+          syncInputFields(index);
+          updateOutputsOnly();
+        });
+        input.addEventListener('blur', () => {
+          if (index >= 2) return;
+          input.value = round(clamp(parseFloat(input.value) || 0, -1, 1), 2);
+          syncInputFields(index);
+        });
+        el.inputVector.appendChild(row);
+      });
+    }
+
+    function applyInputVector() {
+      const values = Array.from(el.inputVector.querySelectorAll('input')).map(input => clamp(parseFloat(input.value) || 0, -1, 1));
+      state.inputVector = buildFeatureVector(values, getInputCount());
+      buildInputFields();
+      runForwardPulse();
+      updateAll(true);
+      log('Eingabe', 'Eingabevektor angewendet');
+    }
+
+    function syncInputFields(activeIndex) {
+      Array.from(el.inputVector.querySelectorAll('input')).forEach((input, index) => {
+        if (index !== activeIndex || input.readOnly) input.value = round(state.inputVector[index] || 0, 2);
+      });
+    }
+
+    function generateData() {
+      const noise = clamp(parseFloat(el.noise.value) || 0, 0, 0.5);
+      const type = el.dataset.value;
+      state.data = [];
+      for (let i = 0; i < 220; i++) {
+        const x = rand(-1, 1);
+        const y = rand(-1, 1);
+        let label;
+        if (type === 'circle') label = Math.sqrt(x * x + y * y) < 0.58 ? 1 : 0;
+        else if (type === 'bands') label = Math.sin((x + y) * 5.2) > 0 ? 1 : 0;
+        else label = x * y > 0 ? 1 : 0;
+        const noisyX = clamp(x + rand(-noise, noise), -1, 1);
+        const noisyY = clamp(y + rand(-noise, noise), -1, 1);
+        state.data.push({ x: noisyX, y: noisyY, label });
+      }
+      state.lossHistory = [];
+      state.epoch = 0;
+      scheduleDecision(true);
+      scheduleLoss(true);
+    }
+
+    function targetVector(point) {
+      const outputCount = getOutputCount();
+      const radial = clamp(1 - Math.sqrt(point.x * point.x + point.y * point.y), 0, 1);
+      const values = [point.label, 1 - point.label, radial];
+      return values.slice(0, outputCount);
+    }
+
+    function buildNetwork() {
+      const layers = state.architecture.slice();
+      const weights = [];
+      const biases = [];
+      for (let layer = 1; layer < layers.length; layer++) {
+        const prev = layers[layer - 1];
+        const curr = layers[layer];
+        const scale = Math.sqrt(2 / Math.max(1, prev + curr));
+        const matrix = [];
+        const bias = [];
+        for (let j = 0; j < curr; j++) {
+          const row = [];
+          for (let i = 0; i < prev; i++) row.push(rand(-scale, scale));
+          matrix.push(row);
+          bias.push(rand(-0.08, 0.08));
+        }
+        weights.push(matrix);
+        biases.push(bias);
+      }
+      state.network = { layers, weights, biases };
+      state.lossHistory = [];
+      state.epoch = 0;
+      state.selectedNode = null;
+    }
+
+    function activate(x, outputLayer) {
+      if (outputLayer) return sigmoid(x);
+      if (el.activation.value === 'tanh') return Math.tanh(x);
+      if (el.activation.value === 'relu') return Math.max(0, x);
+      return sigmoid(x);
+    }
+
+    function derivativeFromActivation(a, z, outputLayer) {
+      if (outputLayer) return a * (1 - a);
+      if (el.activation.value === 'tanh') return 1 - a * a;
+      if (el.activation.value === 'relu') return z > 0 ? 1 : 0;
+      return a * (1 - a);
+    }
+
+    function forward(input) {
+      const net = state.network;
+      const activations = [input.slice()];
+      const zs = [];
+      let current = input.slice();
+      for (let l = 0; l < net.weights.length; l++) {
+        const outputLayer = l === net.weights.length - 1;
+        const next = [];
+        const zLayer = [];
+        for (let j = 0; j < net.weights[l].length; j++) {
+          let z = net.biases[l][j];
+          for (let i = 0; i < current.length; i++) z += net.weights[l][j][i] * current[i];
+          zLayer.push(z);
+          next.push(activate(z, outputLayer));
+        }
+        zs.push(zLayer);
+        activations.push(next);
+        current = next;
+      }
+      return { output: current, activations, zs };
+    }
+
+    function pointToInput(point) {
+      return buildFeatureVector([point.x, point.y], getInputCount());
+    }
+
+    function trainBatch(steps) {
+      const net = state.network;
+      const lr = getLearningRate();
+      for (let step = 0; step < steps; step++) {
+        for (let n = 0; n < 24; n++) {
+          const point = state.data[Math.floor(Math.random() * state.data.length)];
+          backprop(pointToInput(point), targetVector(point), lr);
+        }
+        state.epoch += 1;
+      }
+      const metrics = evaluateMetrics();
+      state.lossHistory.push(metrics.loss);
+      if (state.lossHistory.length > 220) state.lossHistory.shift();
+      return metrics;
+    }
+
+    function backprop(input, target, lr) {
+      const net = state.network;
+      const result = forward(input);
+      const deltas = new Array(net.weights.length);
+      const last = net.weights.length - 1;
+      deltas[last] = result.output.map((a, j) => {
+        const error = a - (target[j] || 0);
+        return error * derivativeFromActivation(a, result.zs[last][j], true);
+      });
+      for (let l = last - 1; l >= 0; l--) {
+        const layerDelta = [];
+        for (let i = 0; i < net.layers[l + 1]; i++) {
+          let sum = 0;
+          for (let j = 0; j < net.layers[l + 2]; j++) sum += net.weights[l + 1][j][i] * deltas[l + 1][j];
+          layerDelta.push(sum * derivativeFromActivation(result.activations[l + 1][i], result.zs[l][i], false));
+        }
+        deltas[l] = layerDelta;
+      }
+      for (let l = 0; l < net.weights.length; l++) {
+        const prevActivations = result.activations[l];
+        for (let j = 0; j < net.weights[l].length; j++) {
+          for (let i = 0; i < net.weights[l][j].length; i++) {
+            net.weights[l][j][i] -= lr * deltas[l][j] * prevActivations[i];
+          }
+          net.biases[l][j] -= lr * deltas[l][j];
+        }
+      }
+    }
+
+    function evaluateMetrics() {
+      if (!state.data.length || !state.network) return { loss: 0, accuracy: 0 };
+      let loss = 0;
+      let correct = 0;
+      for (const point of state.data) {
+        const out = forward(pointToInput(point)).output;
+        const target = targetVector(point);
+        for (let i = 0; i < target.length; i++) {
+          const e = (out[i] || 0) - target[i];
+          loss += e * e;
+        }
+        const predicted = out[0] >= 0.5 ? 1 : 0;
+        if (predicted === point.label) correct += 1;
+      }
+      loss /= Math.max(1, state.data.length * getOutputCount());
+      return { loss, accuracy: correct / state.data.length };
+    }
+
+    function startTraining() {
+      clearTimeout(state.noiseTimer);
+      state.noiseTimer = null;
+      state.training = true;
+      el.trainToggle.textContent = 'Training stoppen';
+      setModelControlsDisabled(true);
+      setRuntime('Training läuft');
+      log('Training', 'Training gestartet');
+    }
+
+    function stopTraining(reason) {
+      if (!state.training) return;
+      state.training = false;
+      el.trainToggle.textContent = 'Training starten';
+      setModelControlsDisabled(false);
+      setRuntime('Bereit');
+      if (reason) log('Training', reason);
+    }
+
+    function setModelControlsDisabled(disabled) {
+      [
+        el.inputCount, el.outputCount, el.hiddenLayers, el.activation, el.dataset, el.noise,
+        el.singleStep, el.rebuildBtn, el.resetDataBtn, el.forwardBtn
+      ].forEach(control => { control.disabled = disabled; });
+      el.presets.forEach(button => { button.disabled = disabled; });
+    }
+
+    function setRuntime(text) {
+      el.runtimeState.textContent = text;
+      if (text === 'Bereit') updateSceneStatus();
+      else el.sceneStatus.textContent = text;
+    }
+
+    function init3D() {
+      ui3d.container = el.network3d;
+      removeFallbackCanvas();
+      if (!window.THREE) {
+        show3DFallback(ui3d.threeLoadFailed ? 'Three.js konnte nicht geladen werden' : '3D Bibliothek wird geladen');
+        ensureThreeLoaded();
+        return;
+      }
+      try {
+        el.webglWarning.classList.remove('is-visible');
+        ui3d.scene = new THREE.Scene();
+        ui3d.scene.background = null;
+        ui3d.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 1000);
+        ui3d.fitCenter = new THREE.Vector3(0, 0, 0);
+        ui3d.camera.position.set(0, 0, ui3d.zoom);
+        ui3d.camera.lookAt(ui3d.fitCenter);
+        ui3d.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        ui3d.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        ui3d.renderer.setSize(1, 1, false);
+        ui3d.renderer.domElement.addEventListener('webglcontextlost', event => {
+          event.preventDefault();
+          show3DFallback('WebGL Kontext verloren');
+        });
+        ui3d.container.appendChild(ui3d.renderer.domElement);
+        ui3d.group = new THREE.Group();
+        ui3d.scene.add(ui3d.group);
+        ui3d.scene.add(new THREE.AmbientLight(0xffffff, 0.82));
+        const light = new THREE.DirectionalLight(0xffffff, 1.2);
+        light.position.set(3, 5, 7);
+        ui3d.scene.add(light);
+        ui3d.raycaster = new THREE.Raycaster();
+        ui3d.pointer = new THREE.Vector2();
+        ui3d.available = true;
+        ui3d.initialized = true;
+        ui3d.loadingThree = false;
+        ui3d.threeLoadFailed = false;
+        updateSceneStatus();
+        bind3DInput();
+        build3DNetwork();
+        resize3D();
+      } catch (error) {
+        console.error(error);
+        ui3d.loadingThree = false;
+        show3DFallback('WebGL konnte nicht initialisiert werden');
+      }
+    }
+
+    function ensureThreeLoaded() {
+      if (window.THREE || ui3d.threeLoadStarted) return;
+      ui3d.threeLoadStarted = true;
+      ui3d.loadingThree = true;
+      updateSceneStatus();
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';
+      script.async = true;
+      script.onload = () => {
+        ui3d.loadingThree = false;
+        ui3d.threeLoadFailed = false;
+        init3D();
+      };
+      script.onerror = () => {
+        ui3d.loadingThree = false;
+        ui3d.threeLoadFailed = true;
+        show3DFallback('Three.js konnte nicht geladen werden');
+      };
+      document.head.appendChild(script);
+    }
+
+    function baseSceneStatus() {
+      if (ui3d.available) return '3D Szene aktiv';
+      if (ui3d.loadingThree) return '3D Bibliothek wird geladen';
+      return '2D Fallback aktiv';
+    }
+
+    function updateSceneStatus() {
+      if (state.training) el.sceneStatus.textContent = 'Training läuft';
+      else el.sceneStatus.textContent = baseSceneStatus();
+    }
+
+    function show3DFallback(message) {
+      clear3DGroup();
+      disposeRenderer();
+      removeFallbackCanvas();
+      ui3d.available = false;
+      ui3d.initialized = false;
+      updateSceneStatus();
+      el.webglWarning.textContent = message + '. Die numerische Simulation bleibt aktiv.';
+      el.webglWarning.classList.add('is-visible');
+      const canvas = document.createElement('canvas');
+      canvas.setAttribute('aria-hidden', 'true');
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      el.network3d.appendChild(canvas);
+      ui3d.fallbackCanvas = canvas;
+      ui3d.fallbackCtx = canvas.getContext('2d');
+      ui3d.fallbackDirty = true;
+      resize3D();
+      drawFallback3D();
+    }
+
+    function clear3DGroup() {
+      if (!ui3d.group) return;
+      const geometries = new Set();
+      const materials = new Set();
+      ui3d.group.traverse(object => {
+        if (object.geometry) geometries.add(object.geometry);
+        if (Array.isArray(object.material)) object.material.forEach(material => materials.add(material));
+        else if (object.material) materials.add(object.material);
+      });
+      while (ui3d.group.children.length) ui3d.group.remove(ui3d.group.children[0]);
+      geometries.forEach(geometry => { if (geometry.dispose) geometry.dispose(); });
+      materials.forEach(material => { if (material.dispose) material.dispose(); });
+      ui3d.nodeMeshes = [];
+      ui3d.lineObjects = [];
+      ui3d.hitMeshes = [];
+      ui3d.hovered = null;
+      ui3d.hoveredLine = null;
+    }
+
+    function disposeRenderer() {
+      if (!ui3d.renderer) return;
+      try { if (ui3d.renderer.forceContextLoss) ui3d.renderer.forceContextLoss(); } catch (error) {}
+      try { if (ui3d.renderer.dispose) ui3d.renderer.dispose(); } catch (error) {}
+      if (ui3d.renderer.domElement && ui3d.renderer.domElement.parentElement) {
+        ui3d.renderer.domElement.parentElement.removeChild(ui3d.renderer.domElement);
+      }
+      ui3d.renderer = null;
+      ui3d.raycaster = null;
+      ui3d.pointer = null;
+    }
+
+    function removeFallbackCanvas() {
+      if (ui3d.fallbackCanvas && ui3d.fallbackCanvas.parentElement) {
+        ui3d.fallbackCanvas.parentElement.removeChild(ui3d.fallbackCanvas);
+      }
+      ui3d.fallbackCanvas = null;
+      ui3d.fallbackCtx = null;
+    }
+
+    function bind3DInput() {
+      const target = ui3d.renderer.domElement;
+      target.addEventListener('pointerdown', event => {
+        ui3d.drag.active = true;
+        ui3d.drag.moved = false;
+        ui3d.drag.x = event.clientX;
+        ui3d.drag.y = event.clientY;
+        target.classList.add('is-dragging');
+        target.classList.remove('is-interactive');
+        updatePointer(event);
+        if (target.setPointerCapture) {
+          try { target.setPointerCapture(event.pointerId); } catch (error) {}
+        }
+      });
+      target.addEventListener('pointermove', event => {
+        if (ui3d.drag.active) {
+          const dx = event.clientX - ui3d.drag.x;
+          const dy = event.clientY - ui3d.drag.y;
+          if (Math.abs(dx) + Math.abs(dy) > 2) ui3d.drag.moved = true;
+          ui3d.group.rotation.y += dx * 0.006;
+          ui3d.group.rotation.x += dy * 0.004;
+          ui3d.group.rotation.x = clamp(ui3d.group.rotation.x, -1.25, 1.25);
+          ui3d.drag.x = event.clientX;
+          ui3d.drag.y = event.clientY;
+        }
+        updatePointer(event);
+      });
+      target.addEventListener('pointerup', event => {
+        ui3d.drag.active = false;
+        target.classList.remove('is-dragging');
+        if (target.releasePointerCapture && target.hasPointerCapture && target.hasPointerCapture(event.pointerId)) {
+          try { target.releasePointerCapture(event.pointerId); } catch (error) {}
+        }
+        updatePointer(event);
+      });
+      const resetPointerState = () => {
+        ui3d.drag.active = false;
+        ui3d.hovered = null;
+        ui3d.hoveredLine = null;
+        target.classList.remove('is-dragging', 'is-interactive');
+        if (!state.training) updateSceneStatus();
+        update3DMaterials();
+      };
+      target.addEventListener('pointerleave', resetPointerState);
+      target.addEventListener('pointercancel', resetPointerState);
+      target.addEventListener('lostpointercapture', () => {
+        ui3d.drag.active = false;
+        target.classList.remove('is-dragging');
+      });
+      target.addEventListener('click', () => {
+        if (!ui3d.drag.moved) selectHoveredItem();
+        ui3d.drag.moved = false;
+      });
+      target.addEventListener('wheel', event => {
+        event.preventDefault();
+        ui3d.zoom = clamp(ui3d.zoom + event.deltaY * 0.012, ui3d.minZoom, ui3d.maxZoom);
+        placeCamera();
+      }, { passive: false });
+    }
+
+    function updatePointer(event) {
+      if (!ui3d.available || !ui3d.renderer || !ui3d.raycaster || !ui3d.pointer) return;
+      const rect = ui3d.renderer.domElement.getBoundingClientRect();
+      const width = rect.width || 1;
+      const height = rect.height || 1;
+      ui3d.pointer.x = ((event.clientX - rect.left) / width) * 2 - 1;
+      ui3d.pointer.y = -((event.clientY - rect.top) / height) * 2 + 1;
+      if (ui3d.group && ui3d.group.updateMatrixWorld) ui3d.group.updateMatrixWorld(true);
+      ui3d.camera.updateMatrixWorld(true);
+      ui3d.raycaster.setFromCamera(ui3d.pointer, ui3d.camera);
+      ui3d.raycaster.params.Line.threshold = Math.max(0.08, ui3d.fitRadius * 0.018);
+
+      const nodeHits = ui3d.raycaster.intersectObjects(ui3d.hitMeshes, false);
+      ui3d.hovered = nodeHits.length ? nodeHits[0].object.userData.visual : null;
+      if (ui3d.hovered) {
+        ui3d.hoveredLine = null;
+      } else {
+        const lineHits = ui3d.raycaster.intersectObjects(ui3d.lineObjects, false);
+        ui3d.hoveredLine = lineHits.length ? lineHits[0].object : null;
+      }
+
+      const interactive = !!(ui3d.hovered || ui3d.hoveredLine);
+      ui3d.renderer.domElement.classList.toggle('is-interactive', interactive && !ui3d.drag.active);
+      if (!state.training && interactive) {
+        if (ui3d.hovered) {
+          el.sceneStatus.textContent = 'Hover: Layer ' + ui3d.hovered.userData.layer + ', Neuron ' + ui3d.hovered.userData.index;
+        } else {
+          const ref = ui3d.hoveredLine.userData;
+          el.sceneStatus.textContent = 'Hover: Verbindung ' + ref.from[0] + ':' + ref.sourceIndex + ' → ' + ref.to[0] + ':' + ref.targetIndex;
+        }
+      } else if (!state.training && !ui3d.drag.active) {
+        updateSceneStatus();
+      }
+      update3DMaterials();
+    }
+
+    function selectHoveredItem() {
+      if (ui3d.hovered) {
+        state.selectedNode = ui3d.hovered.userData;
+        updateSelectionPanel();
+        log('Auswahl', 'Neuron L' + state.selectedNode.layer + ' N' + state.selectedNode.index + ' ausgewählt');
+        return;
+      }
+      if (ui3d.hoveredLine) {
+        const ref = ui3d.hoveredLine.userData;
+        const row = state.network.weights[ref.layerIndex] && state.network.weights[ref.layerIndex][ref.targetIndex];
+        const weight = row && Number.isFinite(row[ref.sourceIndex]) ? row[ref.sourceIndex] : 0;
+        state.selectedNode = {
+          type: 'Verbindung',
+          layer: ref.from[0] + ' → ' + ref.to[0],
+          index: ref.sourceIndex + ' → ' + ref.targetIndex,
+          activation: 'w = ' + round(weight, 4),
+          layerIndex: ref.layerIndex,
+          sourceIndex: ref.sourceIndex,
+          targetIndex: ref.targetIndex
+        };
+        updateSelectionPanel();
+        update3DMaterials();
+        log('Auswahl', 'Verbindung L' + ref.layerIndex + ' N' + ref.sourceIndex + ' → N' + ref.targetIndex + ' ausgewählt');
+        return;
+      }
+      if (state.selectedNode) {
+        state.selectedNode = null;
+        updateSelectionPanel();
+        update3DMaterials();
+      }
+    }
+
+    function build3DNetwork() {
+      if (!ui3d.available || !state.network) {
+        drawFallback3D();
+        return;
+      }
+      clear3DGroup();
+      const theme = themeColors();
+      const nodeGeometry = new THREE.SphereGeometry(0.16, 28, 18);
+      const hitGeometry = new THREE.SphereGeometry(0.36, 12, 8);
+      const hitMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+      const positions = compute3DPositions(state.network.layers);
+
+      for (let l = 1; l < positions.length; l++) {
+        for (let j = 0; j < positions[l].length; j++) {
+          for (let i = 0; i < positions[l - 1].length; i++) {
+            const from = positions[l - 1][i];
+            const to = positions[l][j];
+            const weight = state.network.weights[l - 1][j][i];
+            const material = new THREE.LineBasicMaterial({
+              color: weight >= 0 ? theme.positive : theme.negative,
+              transparent: true,
+              opacity: clamp(Math.abs(weight) * 1.2, 0.12, 0.58)
+            });
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(from.x, from.y, from.z),
+              new THREE.Vector3(to.x, to.y, to.z)
+            ]);
+            const line = new THREE.Line(geometry, material);
+            line.userData = { layerIndex: l - 1, sourceIndex: i, targetIndex: j, from: [l - 1, i], to: [l, j] };
+            ui3d.group.add(line);
+            ui3d.lineObjects.push(line);
+          }
+        }
+      }
+
+      positions.forEach((layerPositions, l) => {
+        layerPositions.forEach((pos, i) => {
+          const material = new THREE.MeshStandardMaterial({
+            color: theme.node,
+            roughness: 0.58,
+            metalness: 0.02,
+            emissive: theme.emissive,
+            emissiveIntensity: 0.05
+          });
+          const mesh = new THREE.Mesh(nodeGeometry, material);
+          mesh.position.set(pos.x, pos.y, pos.z);
+          mesh.scale.setScalar(l === 0 || l === positions.length - 1 ? 1.08 : 1);
+          mesh.userData = { type: 'Neuron', layer: l, index: i, activation: 0 };
+          ui3d.group.add(mesh);
+          ui3d.nodeMeshes.push(mesh);
+
+          const hitMesh = new THREE.Mesh(hitGeometry, hitMaterial);
+          hitMesh.position.copy(mesh.position);
+          hitMesh.userData = { visual: mesh };
+          ui3d.group.add(hitMesh);
+          ui3d.hitMeshes.push(hitMesh);
+        });
+      });
+      reset3DView(false);
+      update3DActivations(forward(state.inputVector).activations);
+    }
+
+    function compute3DPositions(layers) {
+      const layerCount = layers.length;
+      const xGap = Math.min(2.4, Math.max(1.15, 8 / Math.max(1, layerCount - 1)));
+      const positions = [];
+      layers.forEach((count, l) => {
+        const x = (l - (layerCount - 1) / 2) * xGap;
+        const layer = [];
+        if (count === 1) {
+          layer.push({ x, y: 0, z: 0 });
+        } else {
+          const cols = count > 9 ? 2 : 1;
+          const rows = Math.ceil(count / cols);
+          const yGap = Math.min(0.62, Math.max(0.34, 3.9 / Math.max(1, rows - 1)));
+          const zGap = cols === 1 ? 0 : 0.62;
+          for (let i = 0; i < count; i++) {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const y = (row - (rows - 1) / 2) * yGap;
+            const z = (col - (cols - 1) / 2) * zGap;
+            layer.push({ x, y, z });
+          }
+        }
+        positions.push(layer);
+      });
+      return positions;
+    }
+
+    function themeColors() {
+      const dark = document.body.getAttribute('data-theme') === 'dark';
+      return {
+        node: dark ? 0x7f8ea3 : 0xd7dee9,
+        nodeHot: dark ? 0x94bdff : 0x164b93,
+        selected: dark ? 0xf6c36a : 0xa15c00,
+        hover: dark ? 0xbfd5ff : 0x0d356f,
+        positive: dark ? 0x8bb8ff : 0x164b93,
+        negative: dark ? 0xff9b92 : 0xb42318,
+        emissive: dark ? 0x0d1b32 : 0x000000
+      };
+    }
+
+    function update3DActivations(activations) {
+      if (!ui3d.available) {
+        ui3d.fallbackDirty = true;
+        drawFallback3D(activations);
+        return;
+      }
+      ui3d.nodeMeshes.forEach(mesh => {
+        const data = mesh.userData;
+        const activation = activations[data.layer] && Number.isFinite(activations[data.layer][data.index]) ? activations[data.layer][data.index] : 0;
+        data.activation = activation;
+      });
+      update3DMaterials();
+    }
+
+    function update3DMaterials() {
+      if (!ui3d.available || !state.network || !window.THREE) return;
+      const colors = themeColors();
+      ui3d.nodeMeshes.forEach(mesh => {
+        const data = mesh.userData;
+        const base = new THREE.Color(colors.node);
+        const hot = new THREE.Color(colors.nodeHot);
+        const t = clamp(Math.abs(data.activation), 0, 1);
+        base.lerp(hot, t);
+        if (state.selectedNode && state.selectedNode.layer === data.layer && state.selectedNode.index === data.index) base.setHex(colors.selected);
+        if (ui3d.hovered === mesh) base.setHex(colors.hover);
+        mesh.material.color.copy(base);
+        mesh.material.emissive.setHex(colors.emissive);
+        mesh.material.emissiveIntensity = 0.03 + t * 0.18;
+        const pulse = state.forwardPulse > 0 ? Math.sin((state.forwardPulse + data.layer * 0.22) * Math.PI) * 0.08 : 0;
+        mesh.scale.setScalar((data.layer === 0 || data.layer === state.network.layers.length - 1 ? 1.08 : 1) + t * 0.18 + Math.max(0, pulse));
+      });
+      ui3d.lineObjects.forEach(line => {
+        const ref = line.userData;
+        const layer = state.network.weights[ref.layerIndex];
+        const row = layer && layer[ref.targetIndex];
+        const weight = row && Number.isFinite(row[ref.sourceIndex]) ? row[ref.sourceIndex] : 0;
+        const isSelected = state.selectedNode && state.selectedNode.type === 'Verbindung' &&
+          state.selectedNode.layerIndex === ref.layerIndex &&
+          state.selectedNode.sourceIndex === ref.sourceIndex &&
+          state.selectedNode.targetIndex === ref.targetIndex;
+        line.userData.weight = weight;
+        line.material.color.setHex(isSelected ? colors.selected : (ui3d.hoveredLine === line ? colors.hover : (weight >= 0 ? colors.positive : colors.negative)));
+        line.material.opacity = isSelected ? 0.95 : (ui3d.hoveredLine === line ? 0.82 : clamp(Math.abs(weight) * 1.2, 0.10, 0.58));
+      });
+    }
+
+    function reset3DView(logIt = true) {
+      if (!ui3d.available) return;
+      ui3d.group.rotation.set(-0.18, -0.42, 0);
+      frame3DScene(false);
+      if (logIt) log('Ansicht', '3D Ansicht vollständig eingerahmt');
+    }
+
+    function placeCamera() {
+      if (!ui3d.available || !ui3d.camera) return;
+      const center = ui3d.fitCenter || new THREE.Vector3(0, 0, 0);
+      ui3d.camera.position.set(center.x, center.y, center.z + ui3d.zoom);
+      ui3d.camera.lookAt(center);
+      ui3d.camera.updateMatrixWorld(true);
+    }
+
+    function frame3DScene(preserveZoom) {
+      if (!ui3d.available || !ui3d.group || !ui3d.camera || !window.THREE) return;
+      ui3d.group.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(ui3d.group);
+      if (box.isEmpty()) {
+        ui3d.fitCenter.set(0, 0, 0);
+        ui3d.fitRadius = 1;
+        ui3d.minZoom = 6;
+        ui3d.maxZoom = 24;
+        ui3d.zoom = Math.max(ui3d.zoom, ui3d.minZoom);
+        placeCamera();
+        return;
+      }
+      const sphere = new THREE.Sphere();
+      box.getBoundingSphere(sphere);
+      ui3d.fitCenter.copy(sphere.center);
+      ui3d.fitRadius = Math.max(1, sphere.radius);
+      const verticalFov = THREE.MathUtils.degToRad(ui3d.camera.fov || 42);
+      const horizontalFov = 2 * Math.atan(Math.tan(verticalFov / 2) * Math.max(0.1, ui3d.camera.aspect || 1));
+      const limitingFov = Math.max(0.25, Math.min(verticalFov, horizontalFov));
+      const requiredDistance = (ui3d.fitRadius / Math.sin(limitingFov / 2)) * 1.28;
+      ui3d.minZoom = clamp(requiredDistance, 4.5, 80);
+      ui3d.maxZoom = Math.max(ui3d.minZoom * 3.2, ui3d.minZoom + 12);
+      ui3d.zoom = preserveZoom ? clamp(Math.max(ui3d.zoom, ui3d.minZoom), ui3d.minZoom, ui3d.maxZoom) : ui3d.minZoom;
+      ui3d.camera.near = Math.max(0.05, ui3d.zoom - ui3d.fitRadius * 3.2);
+      ui3d.camera.far = ui3d.zoom + ui3d.fitRadius * 4.5 + 30;
+      ui3d.camera.updateProjectionMatrix();
+      placeCamera();
+    }
+
+    function resize3D() {
+      const rect = el.sceneFrame.getBoundingClientRect();
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+      if (ui3d.available) {
+        ui3d.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        ui3d.renderer.setSize(width, height, false);
+        ui3d.camera.aspect = width / height;
+        ui3d.camera.updateProjectionMatrix();
+        frame3DScene(true);
+      } else if (ui3d.fallbackCanvas) {
+        sizeCanvas(ui3d.fallbackCanvas, ui3d.fallbackCanvas.parentElement);
+        ui3d.fallbackDirty = true;
+        drawFallback3D();
+      }
+    }
+
+    function drawFallback3D(activations) {
+      if (!ui3d.fallbackCtx || !state.network) return;
+      if (!activations) activations = forward(state.inputVector).activations;
+      const canvas = ui3d.fallbackCanvas;
+      const ctx = ui3d.fallbackCtx;
+      sizeCanvas(canvas, canvas.parentElement);
+      ui3d.fallbackDirty = false;
+      const w = Math.max(1, Math.floor(canvas.parentElement.clientWidth));
+      const h = Math.max(1, Math.floor(canvas.parentElement.clientHeight));
+      ctx.clearRect(0, 0, w, h);
+      const layers = state.network.layers;
+      const pad = Math.min(32, Math.max(4, Math.min(w, h) * 0.08), w * 0.35, h * 0.35);
+      const xGap = layers.length > 1 ? Math.max(0, (w - pad * 2) / (layers.length - 1)) : 0;
+      const points = layers.map((count, l) => {
+        const x = pad + xGap * l;
+        const yGap = count > 1 ? Math.min(42, (h - pad * 2) / (count - 1)) : 0;
+        return Array.from({ length: count }, (_, i) => ({ x, y: h / 2 + (i - (count - 1) / 2) * yGap }));
+      });
+      ctx.lineWidth = 1;
+      for (let l = 1; l < points.length; l++) {
+        for (const a of points[l - 1]) for (const b of points[l]) {
+          ctx.strokeStyle = getCss('--line-strong');
+          ctx.globalAlpha = 0.28;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+      points.forEach((layer, l) => layer.forEach((p, i) => {
+        const value = activations && activations[l] ? Math.abs(activations[l][i] || 0) : 0;
+        ctx.fillStyle = value > 0.55 ? getCss('--primary') : getCss('--surface');
+        ctx.strokeStyle = getCss('--line-strong');
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 8 + value * 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }));
+    }
+
+    function runForwardPulse() {
+      const result = forward(state.inputVector);
+      state.forwardPulse = 1;
+      update3DActivations(result.activations);
+      updateOutputsOnly(result.output);
+      log('Forward', 'Forward Pass berechnet');
+    }
+
+    function updateAll(force) {
+      const metrics = evaluateMetrics();
+      updateMetrics(metrics);
+      updateOutputsOnly();
+      updateSelectionPanel();
+      update3DActivations(forward(state.inputVector).activations);
+      scheduleDecision(force);
+      scheduleLoss(force);
+    }
+
+    function updateMetrics(metrics) {
+      const arch = state.architecture.join(' → ');
+      el.metricArch.textContent = arch;
+      el.metricParams.textContent = countParams().toLocaleString('de-DE');
+      el.metricLoss.textContent = round(metrics.loss, 4);
+      el.metricAcc.textContent = Math.round(metrics.accuracy * 100) + '%';
+      el.epochOut.textContent = String(state.epoch);
+      el.datasetOut.textContent = labels[el.dataset.value] || el.dataset.value;
+      el.activationOut.textContent = labels[el.activation.value] || el.activation.value;
+      el.learningRateOut.textContent = Number(el.learningRate.value).toFixed(3);
+      el.noiseOut.textContent = Number(el.noise.value).toFixed(2);
+    }
+
+    function countParams() {
+      if (!state.network) return 0;
+      let total = 0;
+      for (let l = 1; l < state.network.layers.length; l++) {
+        total += state.network.layers[l] * state.network.layers[l - 1];
+        total += state.network.layers[l];
+      }
+      return total;
+    }
+
+    function updateOutputsOnly(existingOutput) {
+      const result = existingOutput ? null : forward(state.inputVector);
+      const output = existingOutput || result.output;
+      el.outputStack.innerHTML = '';
+      output.forEach((value, index) => {
+        const line = document.createElement('div');
+        line.className = 'output-line';
+        const pct = clamp(value, 0, 1) * 100;
+        line.innerHTML = '<span>y' + index + '</span><div class="bar"><i style="width:' + pct.toFixed(1) + '%"></i></div><strong>' + round(value, 3) + '</strong>';
+        el.outputStack.appendChild(line);
+      });
+      if (result) update3DActivations(result.activations);
+    }
+
+    function updateSelectionPanel() {
+      const selected = state.selectedNode;
+      if (!selected) {
+        el.selectionType.textContent = 'keine';
+        el.selectionLayer.textContent = '-';
+        el.selectionIndex.textContent = '-';
+        el.selectionActivation.textContent = '-';
+        return;
+      }
+      el.selectionType.textContent = selected.type || 'Neuron';
+      el.selectionLayer.textContent = String(selected.layer);
+      el.selectionIndex.textContent = String(selected.index);
+      if (selected.type === 'Verbindung') {
+        el.selectionActivation.textContent = String(selected.activation);
+        return;
+      }
+      const mesh = ui3d.nodeMeshes.find(item => item.userData.layer === selected.layer && item.userData.index === selected.index);
+      el.selectionActivation.textContent = mesh ? round(mesh.userData.activation, 4) : round(selected.activation || 0, 4);
+    }
+
+    function scheduleDecision(force) {
+      state.pendingDecision = true;
+      state.forceDecision = state.forceDecision || !!force;
+    }
+
+    function scheduleLoss(force) {
+      state.pendingLoss = true;
+      state.forceLoss = state.forceLoss || !!force;
+    }
+
+    function drawDecision(force) {
+      const now = performance.now();
+      if (!force && state.training && now - state.lastDecisionDraw < 180) return;
+      state.lastDecisionDraw = now;
+      state.pendingDecision = false;
+      state.forceDecision = false;
+      const canvas = el.decisionCanvas;
+      const parent = canvas.parentElement;
+      const ctx = sizeCanvas(canvas, parent);
+      const width = parent.clientWidth;
+      const height = parent.clientHeight;
+      if (width <= 0 || height <= 0) return;
+      ctx.clearRect(0, 0, width, height);
+      const grid = 52;
+      const cellW = width / grid;
+      const cellH = height / grid;
+      for (let gy = 0; gy < grid; gy++) {
+        for (let gx = 0; gx < grid; gx++) {
+          const x = gx / (grid - 1) * 2 - 1;
+          const y = 1 - gy / (grid - 1) * 2;
+          const p = forward(buildFeatureVector([x, y], getInputCount())).output[0] || 0;
+          ctx.fillStyle = colorMix(p);
+          ctx.fillRect(gx * cellW, gy * cellH, Math.ceil(cellW), Math.ceil(cellH));
+        }
+      }
+      ctx.strokeStyle = getCss('--line-strong');
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const x = i * width / 4;
+        const y = i * height / 4;
+        ctx.globalAlpha = 0.42;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      for (const point of state.data) {
+        const px = (point.x + 1) / 2 * width;
+        const py = (1 - (point.y + 1) / 2) * height;
+        ctx.beginPath();
+        ctx.arc(px, py, 3.1, 0, Math.PI * 2);
+        ctx.fillStyle = point.label ? getCss('--primary') : getCss('--surface');
+        ctx.strokeStyle = point.label ? getCss('--primary-strong') : getCss('--text-soft');
+        ctx.lineWidth = 1.2;
+        ctx.fill(); ctx.stroke();
+      }
+    }
+
+    function colorMix(value) {
+      const dark = document.body.getAttribute('data-theme') === 'dark';
+      const a = clamp(value, 0, 1);
+      const low = dark ? [29, 39, 53] : [244, 247, 251];
+      const high = dark ? [49, 94, 154] : [205, 225, 255];
+      const r = Math.round(low[0] + (high[0] - low[0]) * a);
+      const g = Math.round(low[1] + (high[1] - low[1]) * a);
+      const b = Math.round(low[2] + (high[2] - low[2]) * a);
+      return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+
+    function drawLoss(force) {
+      const now = performance.now();
+      if (!force && state.training && now - state.lastLossDraw < 120) return;
+      state.lastLossDraw = now;
+      state.pendingLoss = false;
+      state.forceLoss = false;
+      const canvas = el.lossCanvas;
+      const parent = canvas.parentElement;
+      const ctx = sizeCanvas(canvas, parent);
+      const width = parent.clientWidth;
+      const height = parent.clientHeight;
+      ctx.clearRect(0, 0, width, height);
+      const pad = 28;
+      ctx.strokeStyle = getCss('--line');
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = pad + i * (height - pad * 2) / 4;
+        ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(width - pad, y); ctx.stroke();
+      }
+      const values = state.lossHistory.length ? state.lossHistory : [evaluateMetrics().loss];
+      const max = Math.max(0.02, ...values);
+      ctx.strokeStyle = getCss('--primary');
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      values.forEach((value, index) => {
+        const x = pad + (values.length === 1 ? 0 : index / (values.length - 1)) * (width - pad * 2);
+        const y = height - pad - (value / max) * (height - pad * 2);
+        if (index === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.fillStyle = getCss('--muted');
+      ctx.font = '12px ' + getComputedStyle(document.body).fontFamily;
+      ctx.fillText('max ' + round(max, 3), pad, 18);
+      ctx.fillText('epoch ' + state.epoch, width - pad - 78, height - 10);
+    }
+
+    function sizeCanvas(canvas, parent) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.max(1, Math.floor(parent.clientWidth));
+      const height = Math.max(1, Math.floor(parent.clientHeight));
+      const targetW = Math.floor(width * dpr);
+      const targetH = Math.floor(height * dpr);
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+      }
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return ctx;
+    }
+
+    function getCss(name) {
+      return getComputedStyle(document.body).getPropertyValue(name).trim();
+    }
+
+    function log(type, message) {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      entry.innerHTML = '<time>' + time + '</time><span><strong>' + type + '</strong>: ' + message + '</span>';
+      el.eventLog.prepend(entry);
+      while (el.eventLog.children.length > 8) el.eventLog.removeChild(el.eventLog.lastChild);
+    }
+
+    function mainLoop() {
+      if (state.training) {
+        trainBatch(state.reduceMotion ? 1 : 2);
+        const now = performance.now();
+        if (now - state.lastUiUpdate > 100) {
+          state.lastUiUpdate = now;
+          updateAll(false);
+        } else {
+          update3DActivations(forward(state.inputVector).activations);
+        }
+      }
+      if (state.forwardPulse > 0) {
+        state.forwardPulse = Math.max(0, state.forwardPulse - 0.035);
+        update3DMaterials();
+      }
+      if (state.pendingDecision) drawDecision(state.forceDecision);
+      if (state.pendingLoss) drawLoss(state.forceLoss);
+      if (ui3d.available && ui3d.renderer) ui3d.renderer.render(ui3d.scene, ui3d.camera);
+      else if (ui3d.fallbackDirty || state.training || state.forwardPulse > 0) drawFallback3D();
+      requestAnimationFrame(mainLoop);
+    }
+
+    document.addEventListener('DOMContentLoaded', boot);
+  })();
+  </script>
+</body>
+</html>
