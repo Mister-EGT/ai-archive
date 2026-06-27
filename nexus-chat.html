@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nexus · OpenRouter Chat</title>
-<meta name="description" content="Nexus Chat mit plattformunabhängigen Fluent UI Icons.">
+<meta name="description" content="Nexus Chat mit Fluent UI Web Icon Fallback und plattformunabhängigen SVG Icons.">
+<link rel="preconnect" href="https://static2.sharepointonline.com" crossorigin>
 <style>
   :root{color-scheme:dark;--bg:#1f1f1f;--panel:#252423;--text:#f3f2f1;--muted:#a19f9d;--accent:#0078d4;--border:#3b3a39}
   *{box-sizing:border-box}
@@ -18,12 +19,15 @@
 </head>
 <body>
 <iframe id="nexus-frame" src="nexus-chat-core.html" title="Nexus Chat"></iframe>
-<div class="boot" id="boot"><strong>Nexus</strong>UI Icons werden vorbereitet…</div>
+<div class="boot" id="boot"><strong>Nexus</strong>Fluent UI Icons werden vorbereitet…</div>
 <script>
 const ICON_PATCH = String.raw`
 (function installPortableFluentIcons(){
   if (window.__portableFluentIconsLoaded) return;
   window.__portableFluentIconsLoaded = true;
+
+  const FLUENT_WEB_ICON_FONT_URL = 'https://static2.sharepointonline.com/files/fabric/assets/icons/fabric-icons-a13498cf.woff';
+  const FONT_LOAD_TIMEOUT_MS = 1800;
 
   const SVG = {
     Robot:'<path d="M8 8.5h8a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-5a3 3 0 0 1 3-3Z"/><path d="M12 8.5V5"/><path d="M9.5 5h5"/><path d="M9 14h.01"/><path d="M15 14h.01"/><path d="M9 17h6"/>',
@@ -60,6 +64,14 @@ const ICON_PATCH = String.raw`
     Lightbulb:'<path d="M9 18h6"/><path d="M10 21h4"/><path d="M8 10a4 4 0 1 1 8 0c0 2.5-2 3.3-2.5 5h-3C10 13.3 8 12.5 8 10Z"/>'
   };
 
+  function injectFluentWebIconFont(){
+    if (document.getElementById('fluent-web-icon-font-fallback')) return;
+    const style = document.createElement('style');
+    style.id = 'fluent-web-icon-font-fallback';
+    style.textContent = '@font-face{font-family:"FabricMDL2Icons";src:url("' + FLUENT_WEB_ICON_FONT_URL + '") format("woff");font-weight:normal;font-style:normal;font-display:block}.fluent-icon{font-family:"Segoe Fluent Icons","Segoe MDL2 Assets","FabricMDL2Icons",sans-serif!important;line-height:1;display:inline-flex;align-items:center;justify-content:center}';
+    document.head.appendChild(style);
+  }
+
   function iconMarkup(name){
     const path = SVG[name] || SVG.Component;
     return '<svg class="fluent-svg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + path + '</svg>';
@@ -75,21 +87,52 @@ const ICON_PATCH = String.raw`
     });
   }
 
-  const style = document.createElement('style');
-  style.id = 'portable-fluent-icons-style';
-  style.textContent = '.fluent-icon{font-family:inherit!important;line-height:1;display:inline-flex;align-items:center;justify-content:center}.fluent-svg-icon{width:100%;height:100%;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.fluent-svg-icon .fill{fill:currentColor;stroke:none}';
-  document.head.appendChild(style);
+  function enableInlineSvgFallback(){
+    if (document.getElementById('portable-fluent-icons-style')) return;
+    const style = document.createElement('style');
+    style.id = 'portable-fluent-icons-style';
+    style.textContent = '.fluent-icon{font-family:inherit!important}.fluent-svg-icon{width:100%;height:100%;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.fluent-svg-icon .fill{fill:currentColor;stroke:none}';
+    document.head.appendChild(style);
+    upgradeFluentIcons(document);
+    new MutationObserver(records => {
+      for (const record of records) {
+        record.addedNodes.forEach(node => {
+          if (node.nodeType !== 1) return;
+          if (node.matches?.('.fluent-icon[data-icon]')) upgradeFluentIcons(node.parentElement || document);
+          else upgradeFluentIcons(node);
+        });
+      }
+    }).observe(document.body, { childList:true, subtree:true });
+  }
 
-  upgradeFluentIcons(document);
-  new MutationObserver(records => {
-    for (const record of records) {
-      record.addedNodes.forEach(node => {
-        if (node.nodeType !== 1) return;
-        if (node.matches?.('.fluent-icon[data-icon]')) upgradeFluentIcons(node.parentElement || document);
-        else upgradeFluentIcons(node);
-      });
+  function wait(ms){
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function fluentWebFontLoaded(){
+    if (!document.fonts?.load || !document.fonts?.check) return false;
+    try {
+      await Promise.race([
+        document.fonts.load('16px "FabricMDL2Icons"', '\\uE710'),
+        wait(FONT_LOAD_TIMEOUT_MS)
+      ]);
+      return document.fonts.check('16px "FabricMDL2Icons"', '\\uE710');
+    } catch {
+      return false;
     }
-  }).observe(document.body, { childList:true, subtree:true });
+  }
+
+  async function start(){
+    injectFluentWebIconFont();
+    if (await fluentWebFontLoaded()) {
+      window.__portableFluentIconsMode = 'fluent-web-font';
+      return;
+    }
+    window.__portableFluentIconsMode = 'inline-svg';
+    enableInlineSvgFallback();
+  }
+
+  start();
 })();
 `;
 
@@ -99,7 +142,7 @@ const boot = document.getElementById('boot');
 function setBoot(message, state){
   boot.innerHTML = '<strong>Nexus</strong>' + message;
   boot.className = 'boot ' + (state || '');
-  if (state === 'ok') setTimeout(() => { boot.style.opacity = '0'; boot.style.pointerEvents = 'none'; }, 1800);
+  if (state === 'ok') setTimeout(() => { boot.style.opacity = '0'; boot.style.pointerEvents = 'none'; }, 2200);
 }
 
 frame.addEventListener('load', () => {
@@ -109,7 +152,7 @@ frame.addEventListener('load', () => {
     const script = doc.createElement('script');
     script.textContent = ICON_PATCH;
     doc.body.appendChild(script);
-    setBoot('Plattformunabhängige UI Icons aktiv.', 'ok');
+    setBoot('Fluent UI Web Icons aktiv, SVGs bleiben als letzte Absicherung.', 'ok');
   } catch (error) {
     console.error(error);
     setBoot('Icon Fix konnte nicht geladen werden: ' + (error.message || error), 'error');
