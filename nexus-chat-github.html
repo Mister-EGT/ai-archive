@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nexus · GitHub API Tools</title>
+<meta name="description" content="Nexus Chat mit optionalen read-only GitHub API Tools für toolfähige Modelle.">
+<style>
+  :root{color-scheme:dark;--bg:#1f1f1f;--panel:#252423;--text:#f3f2f1;--muted:#a19f9d;--accent:#0078d4;--border:#3b3a39}
+  *{box-sizing:border-box}
+  html,body{width:100%;height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+  iframe{position:fixed;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+  .boot{position:fixed;inset:auto 16px 16px auto;z-index:10;max-width:min(420px,calc(100% - 32px));padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:rgba(37,36,35,.94);box-shadow:0 18px 45px rgba(0,0,0,.35);font-size:13px;line-height:1.45;color:var(--muted)}
+  .boot strong{display:block;margin-bottom:3px;color:var(--text)}
+  .boot.ok{border-color:rgba(0,120,212,.55)}
+  .boot.error{border-color:rgba(209,52,56,.72)}
+</style>
+</head>
+<body>
+<iframe id="nexus-frame" src="nexus-chat-glass.html" title="Nexus Chat mit GitHub API Tools"></iframe>
+<div class="boot" id="boot"><strong>Nexus GitHub Tools</strong>Erweiterung wird geladen…</div>
+<script>
+const PATCH_SOURCE = String.raw`
+(function installNexusGithubTools(){
+  if (window.__nexusGithubToolsLoaded) return;
+
+  function ready(){
+    return typeof store !== 'undefined'
+      && typeof streamChat === 'function'
+      && typeof renderSettingsPanel === 'function'
+      && typeof renderInputArea === 'function';
+  }
+
+  if (!ready()) {
+    setTimeout(installNexusGithubTools, 120);
+    return;
+  }
+
+  window.__nexusGithubToolsLoaded = true;
+
+  const GITHUB_API_BASE = 'https://api.github.com';
+  const GH_TOKEN_SESSION_KEY = 'nx_github_token_session';
+  const GH_TOKEN_LOCAL_KEY = 'nx_github_token_local';
+  const GH_MAX_TOOL_CHARS = 18000;
+
+  if (typeof DEFAULT_SETTINGS !== 'undefined') {
+    DEFAULT_SETTINGS.githubToolsEnabled = false;
+    DEFAULT_SETTINGS.githubTokenStorage = 'session';
+  }
+
+  store.settings.githubToolsEnabled = Boolean(store.settings.githubToolsEnabled);
+  store.settings.githubTokenStorage = store.settings.githubTokenStorage === 'local' ? 'local' : 'session';
+  store.saveDebounced?.(200);
+
+  function ghToast(message, type){
+    if (typeof toast === 'function') toast(message, type || 'info');
+    else console.log(message);
+  }
+
+  function safeStorageGet(storage, key){
+    try { return storage.getItem(key) || ''; } catch { return ''; }
+  }
+
+  function safeStorageSet(storage, key, value){
+    try { storage.setItem(key, value); return true; } catch { return false; }
+  }
+
+  function safeStorageRemove(storage, key){
+    try { storage.removeItem(key); } catch {}
+  }
+
+  function getGithubToken(){
+    return safeStorageGet(sessionStorage, GH_TOKEN_SESSION_KEY) || safeStorageGet(localStorage, GH_TOKEN_LOCAL_KEY);
+  }
+
+  function saveGithubToken(token, storageMode){
+    safeStorageRemove(sessionStorage, GH_TOKEN_SESSION_KEY);
+    safeStorageRemove(localStorage, GH_TOKEN_LOCAL_KEY);
+    if (!token) return true;
+    const target = storageMode === 'local' ? localStorage : sessionStorage;
+    const key = storageMode === 'local' ? GH_TOKEN_LOCAL_KEY : GH_TOKEN_SESSION_KEY;
+    return safeStorageSet(target, key, token);
+  }
+
+  function clearGithubToken(){
+    safeStorageRemove(sessionStorage, GH_TOKEN_SESSION_KEY);
+    safeStorageRemove(localStorage, GH_TOKEN_LOCAL_KEY);
+  }
+
+  function githubToolsAvailable(){
+    return Boolean(store.settings.githubToolsEnabled && getGithubToken());
+  }
+
+  function truncateToolText(text, max){
+    const source = String(text == null ? '' : text);
+    const limit = Math.max(2000, Math.min(Number(max) || GH_MAX_TOOL_CHARS, GH_MAX_TOOL_CHARS));
+    if (source.length <= limit) return { text: source, truncated: false };
+    return { text: source.slice(0, limit) + '\n\n[Ausgabe gekürzt.]', truncated: true };
+  }
+
+  function compactJson(value, max){
+    let text;
+    try { text = JSON.stringify(value, null, 2); }
+    catch { text = String(value); }
+    return truncateToolText(text, max).text;
+  }
+
+  function queryString(params){
+    const sp = new URLSearchParams();
+    Object.entries(params || {}).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && String(value).trim() !== '') sp.set(key, String(value));
+    });
+    const q = sp.toString();
+    return q ? '?' + q : '';
+  }
+
+  function requireSimpleName(value, label){
+    const clean = String(value || '').trim();
+    if (!/^[A-Za-z0-9_.-]+$/.test(clean)) throw new Error(label + ' ist ungültig.');
+    return clean;
+  }
+
+  function cleanPath(value){
+    return String(value || '').replace(/^\/+/, '').replace(/\.\.(\/|\\)/g, '').trim();
+  }
+
+  async function githubFetch(path, params){
+    const token = getGithubToken();
+    if (!token) throw new Error('Kein GitHub Token gespeichert.');
+    const url = GITHUB_API_BASE + path + queryString(params);
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + token,
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    const text = await response.text();
+    let data;
+    try { data = text ? JSON.parse(text) : null; }
+    catch { data = text; }
+    if (!response.ok) {
+      return { ok: false, status: response.status, statusText: response.statusText, data: data };
+    }
+    return { ok: true, status: response.status, data: data };
+  }
+
+  function decodeBase64Utf8(base64){
+    const normalized = String(base64 || '').replace(/\s+/g, '');
+    const binary = atob(normalized);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+  }
+
+  const GITHUB_TOOLS = [
+    {
+      type: 'function',
+      function: {
+        name: 'github_get_repo',
+        description: 'Liest Metadaten eines GitHub Repositorys, das mit dem gespeicherten Token sichtbar ist.',
+        parameters: {
+          type: 'object',
+          properties: {
+            owner: { type: 'string', description: 'Repository Owner oder Organisation.' },
+            repo: { type: 'string', description: 'Repository Name.' }
+          },
+          required: ['owner', 'repo']
+        }
+      }
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'github_list_repo_contents',
+        description: 'Listet Dateien und Ordner in einem Repository Pfad.',
+        parameters: {
+          type: 'object',
+          properties: {
+            owner: { type: 'string' },
+            repo: { type: 'string' },
+            path: { type: 'string', description: 'Optionaler Pfad im Repository.' },
+            ref: { type: 'string', description: 'Optionaler Branch, Tag oder Commit.' }
+          },
+          required: ['owner', 'repo']
+        }
+      }
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'github_get_file',
+        description: 'Liest eine UTF-8 Textdatei aus einem Repository. Große Dateien werden gekürzt.',
+        parameters: {
+          type: 'object',
+          properties: {
+            owner: { type: 'string' },
+            repo: { type: 'string' },
+            path: { type: 'string' },
+            ref: { type: 'string' },
+            max_chars: { type: 'number', description: 'Maximale Zeichenanzahl, höchstens 18000.' }
+          },
+          required: ['owner', 'repo', 'path']
+        }
+      }
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'github_search_repositories',
+        description: 'Sucht Repositorys über die GitHub Search API.',
+        parameters: {
+          type: 'object',
+          properties: {
+            q: { type: 'string', description: 'GitHub Suchanfrage.' },
+            per_page: { type: 'number', description: '1 bis 10 Ergebnisse.' }
+          },
+          required: ['q']
+        }
+      }
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'github_search_code',
+        description: 'Sucht Code in einem Repository oder allgemein über die GitHub Code Search API.',
+        parameters: {
+          type: 'object',
+          properties: {
+            q: { type: 'string', description: 'Code Suchanfrage.' },
+            owner: { type: 'string', description: 'Optionaler Owner für repo:owner/repo.' },
+            repo: { type: 'string', description: 'Optionaler Repo Name für repo:owner/repo.' },
+            per_page: { type: 'number', description: '1 bis 10 Ergebnisse.' }
+          },
+          required: ['q']
+        }
+      }
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'github_list_issues',
+        description: 'Listet Issues eines Repositorys. Pull Requests können in der GitHub API ebenfalls als Issues erscheinen.',
+        parameters: {
+          type: 'object',
+          properties: {
+            owner: { type: 'string' },
+            repo: { type: 'string' },
+            state: { type: 'string', enum: ['open', 'closed', 'all'] },
+            per_page: { type: 'number' }
+          },
+          required: ['owner', 'repo']
+        }
+      }
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'github_get_issue',
+        description: 'Liest ein einzelnes Issue oder einen Pull Request über dessen Issue Nummer.',
+        parameters: {
+          type: 'object',
+          properties: {
+            owner: { type: 'string' },
+            repo: { type: 'string' },
+            issue_number: { type: 'number' }
+          },
+          required: ['owner', 'repo', 'issue_number']
+        }
+      }
+    }
+  ];
+
+  async function runGithubTool(name, rawArgs){
+    let args = rawArgs;
+    if (typeof args === 'string') {
+      try { args = JSON.parse(args || '{}'); } catch { args = {}; }
+    }
+    args = args && typeof args === 'object' ? args : {};
+
+    const owner = args.owner ? requireSimpleName(args.owner, 'owner') : '';
+    const repo = args.repo ? requireSimpleName(args.repo, 'repo') : '';
+    const ref = args.ref ? String(args.ref).trim() : '';
+    const perPage = Math.max(1, Math.min(10, Number(args.per_page) || 5));
+
+    if (name === 'github_get_repo') {
+      return githubFetch('/repos/' + owner + '/' + repo);
+    }
+
+    if (name === 'github_list_repo_contents') {
+      const path = cleanPath(args.path || '');
+      const result = await githubFetch('/repos/' + owner + '/' + repo + '/contents/' + path.split('/').map(encodeURIComponent).join('/'), { ref });
+      if (!result.ok) return result;
+      const data = Array.isArray(result.data) ? result.data.map(item => ({
+        name: item.name,
+        path: item.path,
+        type: item.type,
+        size: item.size,
+        html_url: item.html_url
+      })) : result.data;
+      return { ok: true, status: result.status, data: data };
+    }
+
+    if (name === 'github_get_file') {
+      const path = cleanPath(args.path || '');
+      const maxChars = Math.max(1000, Math.min(Number(args.max_chars) || GH_MAX_TOOL_CHARS, GH_MAX_TOOL_CHARS));
+      const result = await githubFetch('/repos/' + owner + '/' + repo + '/contents/' + path.split('/').map(encodeURIComponent).join('/'), { ref });
+      if (!result.ok) return result;
+      if (Array.isArray(result.data) || result.data?.type !== 'file') {
+        return { ok: false, status: 400, data: { message: 'Pfad ist keine Datei.' } };
+      }
+      const decoded = decodeBase64Utf8(result.data.content || '');
+      const limited = truncateToolText(decoded, maxChars);
+      return {
+        ok: true,
+        status: result.status,
+        data: {
+          name: result.data.name,
+          path: result.data.path,
+          size: result.data.size,
+          sha: result.data.sha,
+          html_url: result.data.html_url,
+          truncated: limited.truncated,
+          content: limited.text
+        }
+      };
+    }
+
+    if (name === 'github_search_repositories') {
+      return githubFetch('/search/repositories', { q: String(args.q || ''), per_page: perPage });
+    }
+
+    if (name === 'github_search_code') {
+      let q = String(args.q || '').trim();
+      if (owner && repo && !/\brepo:/i.test(q)) q += ' repo:' + owner + '/' + repo;
+      const result = await githubFetch('/search/code', { q, per_page: perPage });
+      if (!result.ok) return result;
+      const items = Array.isArray(result.data?.items) ? result.data.items.map(item => ({
+        name: item.name,
+        path: item.path,
+        repository: item.repository?.full_name,
+        html_url: item.html_url,
+        score: item.score
+      })) : [];
+      return { ok: true, status: result.status, data: { total_count: result.data?.total_count || 0, items: items } };
+    }
+
+    if (name === 'github_list_issues') {
+      const state = ['open', 'closed', 'all'].includes(args.state) ? args.state : 'open';
+      return githubFetch('/repos/' + owner + '/' + repo + '/issues', { state, per_page: perPage });
+    }
+
+    if (name === 'github_get_issue') {
+      const issueNumber = Math.max(1, Math.floor(Number(args.issue_number) || 0));
+      return githubFetch('/repos/' + owner + '/' + repo + '/issues/' + issueNumber);
+    }
+
+    return { ok: false, status: 400, data: { message: 'Unbekanntes GitHub Tool: ' + name } };
+  }
+
+  function buildToolSystemMessage(){
+    return {
+      role: 'system',
+      content: 'GitHub API Tools sind in Nexus aktiviert. Nutze die GitHub Tools nur, wenn die Anfrage es wirklich erfordert. Die Tools sind read-only: keine Commits, keine Writes, keine Löschungen. Frage nicht nach dem GitHub Token und gib ihn niemals aus. GitHub API Ergebnisse können private Repository-Daten enthalten; fasse sie gezielt zusammen.'
+    };
+  }
+
+  function buildChatBody(model, messages, params, currentModel, stream){
+    const body = { model: model, messages: messages, stream: Boolean(stream) };
+    if (params.temperature != null && params.temperature !== 1 && modelSupportsParam(currentModel, 'temperature')) body.temperature = params.temperature;
+    if (params.topP != null && params.topP !== 1 && modelSupportsParam(currentModel, 'top_p')) body.top_p = params.topP;
+    if (params.maxTokens > 0 && modelSupportsParam(currentModel, 'max_tokens')) body.max_tokens = params.maxTokens;
+    if (params.presencePenalty && modelSupportsParam(currentModel, 'presence_penalty')) body.presence_penalty = params.presencePenalty;
+    if (params.frequencyPenalty && modelSupportsParam(currentModel, 'frequency_penalty')) body.frequency_penalty = params.frequencyPenalty;
+    Object.assign(body, buildReasoningRequest(currentModel, params.reasoningMode || (params.reasoningEnabled ? params.reasoningEffort : 'off')));
+    if (params.providerTag) body.provider = buildProviderRequest(params.providerTag);
+    return body;
+  }
+
+  async function callOpenRouterJson(body, ctrl){
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + store.apiKey,
+        'HTTP-Referer': location.origin,
+        'X-OpenRouter-Title': 'Nexus GitHub Tools'
+      },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw createApiError(apiErrorMessage(err, 'HTTP ' + response.status + ': ' + response.statusText), {
+        status: response.status,
+        statusText: response.statusText,
+        payload: err
+      });
+    }
+    return response.json();
+  }
+
+  function mergeUsage(a, b){
+    return {
+      prompt_tokens: (a?.prompt_tokens || 0) + (b?.prompt_tokens || 0),
+      completion_tokens: (a?.completion_tokens || 0) + (b?.completion_tokens || 0),
+      total_tokens: (a?.total_tokens || 0) + (b?.total_tokens || 0)
+    };
+  }
+
+  const originalStreamChat = streamChat;
+  streamChat = async function githubToolStreamChat(messages, model, params, onToken, onDone, onError){
+    if (!githubToolsAvailable()) {
+      return originalStreamChat(messages, model, params, onToken, onDone, onError);
+    }
+
+    const ctrl = new AbortController();
+    store.abortCtrl = ctrl;
+    store.isStreaming = true;
+    const currentModel = store.modelMap[model] || null;
+    let finished = false;
+
+    const finishDone = (result) => {
+      if (finished) return;
+      finished = true;
+      store.isStreaming = false;
+      store.abortCtrl = null;
+      try { onDone(result); } catch (err) { console.error('onDone error', err); }
+    };
+
+    const finishError = (err) => {
+      if (finished) return;
+      finished = true;
+      store.isStreaming = false;
+      store.abortCtrl = null;
+      try { onError(err); } catch (e) { console.error('onError error', e); }
+    };
+
+    const debugSteps = [];
+
+    try {
+      const toolMessagesBase = [buildToolSystemMessage()].concat(messages);
+      const firstBody = buildChatBody(model, toolMessagesBase, params, currentModel, false);
+      firstBody.tools = GITHUB_TOOLS;
+      firstBody.tool_choice = 'auto';
+
+      const first = await callOpenRouterJson(firstBody, ctrl);
+      debugSteps.push({ request: firstBody, response: first });
+      const firstMsg = first.choices?.[0]?.message || {};
+      const toolCalls = Array.isArray(firstMsg.tool_calls) ? firstMsg.tool_calls : [];
+      let provider = extractProviderInfo(first);
+
+      if (!toolCalls.length) {
+        const content = extractAssistantText(firstMsg) || formatToolCalls(firstMsg.tool_calls);
+        const reasoningPayload = extractReasoningPayloadFromMessage(firstMsg);
+        if (reasoningPayload.text || reasoningPayload.details.length) onToken(reasoningPayload.text, 'reasoning', { reasoningDetails: reasoningPayload.details });
+        if (content) onToken(content, 'content');
+        finishDone({ usage: first.usage || {}, providerTag: provider.providerTag, providerName: provider.providerName, debug: { githubTools: true, steps: debugSteps } });
+        return;
+      }
+
+      ghToast('GitHub API Tool wird ausgeführt…', 'info');
+      const toolResults = [];
+      for (const call of toolCalls.slice(0, 6)) {
+        const name = call.function?.name || call.name || '';
+        const args = call.function?.arguments || call.arguments || '{}';
+        try {
+          const result = await runGithubTool(name, args);
+          toolResults.push({
+            role: 'tool',
+            tool_call_id: call.id || name,
+            name: name,
+            content: compactJson(result, GH_MAX_TOOL_CHARS)
+          });
+        } catch (err) {
+          toolResults.push({
+            role: 'tool',
+            tool_call_id: call.id || name,
+            name: name,
+            content: compactJson({ ok: false, error: err.message || String(err) }, GH_MAX_TOOL_CHARS)
+          });
+        }
+      }
+
+      const assistantToolMsg = {
+        role: 'assistant',
+        content: firstMsg.content || '',
+        tool_calls: toolCalls
+      };
+      const secondMessages = toolMessagesBase.concat([assistantToolMsg], toolResults);
+      const secondBody = buildChatBody(model, secondMessages, params, currentModel, false);
+      secondBody.tools = GITHUB_TOOLS;
+      secondBody.tool_choice = 'none';
+
+      const second = await callOpenRouterJson(secondBody, ctrl);
+      debugSteps.push({ request: secondBody, response: second, toolResults: toolResults });
+      provider = { ...provider, ...extractProviderInfo(second) };
+      const finalMsg = second.choices?.[0]?.message || {};
+      const finalContent = extractAssistantText(finalMsg) || formatToolCalls(finalMsg.tool_calls);
+      const reasoningPayload = extractReasoningPayloadFromMessage(finalMsg);
+      if (reasoningPayload.text || reasoningPayload.details.length) onToken(reasoningPayload.text, 'reasoning', { reasoningDetails: reasoningPayload.details });
+      if (finalContent) onToken(finalContent, 'content');
+
+      finishDone({
+        usage: mergeUsage(first.usage, second.usage),
+        providerTag: provider.providerTag,
+        providerName: provider.providerName,
+        debug: { githubTools: true, steps: debugSteps }
+      });
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        finishDone({ usage: null, debug: { githubTools: true, steps: debugSteps, response: 'ABORTED' } });
+      } else {
+        finishError(err);
+      }
+    } finally {
+      store.isStreaming = false;
+      store.abortCtrl = null;
+    }
+  };
+
+  function injectGithubStyles(){
+    if (document.getElementById('nexus-github-tools-style')) return;
+    const style = document.createElement('style');
+    style.id = 'nexus-github-tools-style';
+    style.textContent = '.setting-row input[type=password],.setting-row select{width:100%;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border-1);border-radius:var(--radius-s);font-size:.85rem;color:var(--text-1)}.github-tool-note{margin-top:10px;color:var(--text-3);font-size:.74rem;line-height:1.5}.github-token-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}.github-token-row button{width:auto;padding-left:14px;padding-right:14px}.github-tool-chip{color:var(--text-3)}.github-tool-chip.on{color:var(--green)}.github-tool-chip.warn{color:var(--orange)}@media(max-width:560px){.github-token-row{grid-template-columns:1fr}}';
+    document.head.appendChild(style);
+  }
+
+  function injectGithubSettings(){
+    injectGithubStyles();
+    const body = document.querySelector('#settings-panel .settings-body');
+    if (!body || body.querySelector('[data-github-tools-section]')) return;
+    const hasToken = Boolean(getGithubToken());
+    const storage = store.settings.githubTokenStorage === 'local' ? 'local' : 'session';
+    const section = document.createElement('div');
+    section.className = 'setting-section';
+    section.setAttribute('data-github-tools-section', '');
+    section.innerHTML = '<h3>GitHub API</h3>'
+      + '<div class="toggle-row">'
+      + '<div><div class="tl">GitHub API Tools erlauben</div><div class="td">Modelle dürfen read-only GitHub API Calls ausführen, wenn ein Token gespeichert ist.</div></div>'
+      + '<label class="switch"><input type="checkbox" id="set-gh-tools" ' + (store.settings.githubToolsEnabled ? 'checked' : '') + '><span class="slider"></span></label>'
+      + '</div>'
+      + '<div class="setting-row">'
+      + '<label for="set-gh-token">GitHub Token <span class="val">' + (hasToken ? 'gespeichert' : 'leer') + '</span></label>'
+      + '<div class="github-token-row"><input id="set-gh-token" type="password" placeholder="github_pat_… oder ghp_…" autocomplete="off" spellcheck="false"><button class="btn-primary btn-neutral-action" id="set-gh-save" type="button">Speichern</button></div>'
+      + '<div class="github-tool-note">Der Token wird nur im Browser gespeichert und nie direkt an OpenRouter gesendet. GitHub API Ergebnisse werden aber als Tool Resultate an das Modell übergeben.</div>'
+      + '</div>'
+      + '<div class="toggle-row">'
+      + '<div><div class="tl">GitHub Token dauerhaft speichern</div><div class="td">Aus = nur sessionStorage, An = localStorage</div></div>'
+      + '<label class="switch"><input type="checkbox" id="set-gh-local" ' + (storage === 'local' ? 'checked' : '') + '><span class="slider"></span></label>'
+      + '</div>'
+      + '<div class="settings-actions">'
+      + '<button class="btn-primary btn-neutral-action" id="set-gh-test" type="button">GitHub Token testen</button>'
+      + '<button class="btn-primary btn-warn-action" id="set-gh-clear" type="button">GitHub Token entfernen</button>'
+      + '</div>';
+
+    const dataSection = Array.from(body.querySelectorAll('.setting-section')).find(sec => sec.textContent.includes('Daten & Sicherheit'));
+    body.insertBefore(section, dataSection || null);
+
+    section.querySelector('#set-gh-tools').addEventListener('change', (event) => {
+      store.settings.githubToolsEnabled = event.target.checked;
+      store.save();
+      renderInputArea();
+      ghToast(event.target.checked ? 'GitHub Tools erlaubt.' : 'GitHub Tools deaktiviert.', event.target.checked ? 'success' : 'info');
+    });
+
+    section.querySelector('#set-gh-local').addEventListener('change', (event) => {
+      const oldToken = getGithubToken();
+      store.settings.githubTokenStorage = event.target.checked ? 'local' : 'session';
+      if (oldToken) saveGithubToken(oldToken, store.settings.githubTokenStorage);
+      store.save();
+      ghToast(store.settings.githubTokenStorage === 'local' ? 'GitHub Token wird dauerhaft gespeichert.' : 'GitHub Token wird nur für diese Sitzung gespeichert.', 'info');
+    });
+
+    section.querySelector('#set-gh-save').addEventListener('click', () => {
+      const input = section.querySelector('#set-gh-token');
+      const token = input.value.trim();
+      if (!token) { ghToast('Kein GitHub Token eingegeben.', 'error'); return; }
+      if (!saveGithubToken(token, store.settings.githubTokenStorage)) { ghToast('GitHub Token konnte nicht gespeichert werden.', 'error'); return; }
+      input.value = '';
+      renderSettingsPanel();
+      renderInputArea();
+      ghToast('GitHub Token gespeichert.', 'success');
+    });
+
+    section.querySelector('#set-gh-clear').addEventListener('click', () => {
+      clearGithubToken();
+      renderSettingsPanel();
+      renderInputArea();
+      ghToast('GitHub Token entfernt.', 'success');
+    });
+
+    section.querySelector('#set-gh-test').addEventListener('click', async () => {
+      try {
+        const result = await githubFetch('/user');
+        if (result.ok) ghToast('GitHub Token funktioniert: ' + (result.data.login || 'Account erkannt'), 'success');
+        else ghToast('GitHub Token Test fehlgeschlagen: HTTP ' + result.status, 'error');
+      } catch (err) {
+        ghToast('GitHub Token Test fehlgeschlagen: ' + (err.message || err), 'error');
+      }
+    });
+  }
+
+  const originalRenderSettingsPanel = renderSettingsPanel;
+  renderSettingsPanel = function githubSettingsPanelWrapper(){
+    originalRenderSettingsPanel.apply(this, arguments);
+    injectGithubSettings();
+  };
+
+  function injectGithubInputChip(){
+    const info = document.querySelector('#chat-input-area .input-info');
+    if (!info || info.querySelector('.github-tool-chip')) return;
+    const chip = document.createElement('span');
+    chip.className = 'github-tool-chip';
+    if (store.settings.githubToolsEnabled && getGithubToken()) {
+      chip.classList.add('on');
+      chip.textContent = 'GitHub API: erlaubt';
+    } else if (store.settings.githubToolsEnabled) {
+      chip.classList.add('warn');
+      chip.textContent = 'GitHub API: Token fehlt';
+    } else {
+      chip.textContent = 'GitHub API: aus';
+    }
+    info.appendChild(chip);
+  }
+
+  const originalRenderInputArea = renderInputArea;
+  renderInputArea = function githubInputAreaWrapper(){
+    originalRenderInputArea.apply(this, arguments);
+    injectGithubInputChip();
+  };
+
+  injectGithubStyles();
+  renderInputArea();
+  if (document.querySelector('#settings-panel.visible')) renderSettingsPanel();
+  ghToast('GitHub API Tools geladen. Aktiviere sie in den Einstellungen.', 'success');
+})();
+`;
+
+const boot = document.getElementById('boot');
+const frame = document.getElementById('nexus-frame');
+
+function setBoot(message, state) {
+  boot.innerHTML = '<strong>Nexus GitHub Tools</strong>' + message;
+  boot.className = 'boot ' + (state || '');
+  if (state === 'ok') setTimeout(() => { boot.style.opacity = '0'; boot.style.pointerEvents = 'none'; }, 2600);
+}
+
+frame.addEventListener('load', () => {
+  try {
+    const doc = frame.contentDocument;
+    if (!doc) throw new Error('Kein Zugriff auf das Nexus Dokument.');
+    const script = doc.createElement('script');
+    script.textContent = PATCH_SOURCE;
+    doc.body.appendChild(script);
+    setBoot('Erweiterung geladen. GitHub API findest du in den Einstellungen.', 'ok');
+  } catch (error) {
+    console.error(error);
+    setBoot('Erweiterung konnte nicht geladen werden: ' + (error.message || error), 'error');
+  }
+});
+</script>
+</body>
+</html>
