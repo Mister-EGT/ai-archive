@@ -33,12 +33,22 @@ body {
 }
 
 .home {
-  width: min(920px, 100%);
+  width: min(1080px, 100%);
+  padding: 28px 0;
 }
 
 .hero {
   margin-bottom: 22px;
   text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .hero h1 {
@@ -47,7 +57,7 @@ body {
   line-height: 1.05;
 }
 
-.hero p {
+.hero p:not(.eyebrow) {
   max-width: 58ch;
   margin: 14px auto 0;
   color: var(--muted);
@@ -57,14 +67,16 @@ body {
 
 .tool-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
   gap: 16px;
 }
 
 .tool-card {
   position: relative;
-  display: block;
-  min-height: 180px;
+  display: flex;
+  min-height: 190px;
+  flex-direction: column;
+  gap: 12px;
   padding: 22px;
   overflow: hidden;
   border: 1px solid var(--panel-border);
@@ -97,23 +109,25 @@ body {
   outline: none;
 }
 
-.tool-card h2 {
+.tool-card h2,
+.tool-card p,
+.tool-card span {
   position: relative;
+}
+
+.tool-card h2 {
   margin: 0;
   font-size: 1.35rem;
 }
 
 .tool-card p {
-  position: relative;
-  margin: 12px 0 0;
+  margin: 0;
   color: var(--muted);
   line-height: 1.55;
 }
 
 .tool-card span {
-  position: absolute;
-  left: 22px;
-  bottom: 22px;
+  margin-top: auto;
   color: var(--accent);
   font-weight: 700;
 }
@@ -123,7 +137,7 @@ body {
     padding: 16px;
   }
 
-  .tool-grid {
-    grid-template-columns: 1fr;
+  .home {
+    padding: 18px 0;
   }
 }
