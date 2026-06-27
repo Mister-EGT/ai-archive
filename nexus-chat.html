@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nexus · OpenRouter Chat</title>
-<meta name="description" content="Nexus Chat mit iPhone-sicheren inline SVG Icons.">
+<meta name="description" content="Nexus Chat mit offiziellen Fluent UI SVG Icons.">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <style>
   :root{color-scheme:dark;--bg:#1f1f1f;--panel:#252423;--text:#f3f2f1;--muted:#a19f9d;--accent:#0078d4;--border:#3b3a39}
   *{box-sizing:border-box}
@@ -18,7 +20,7 @@
 </head>
 <body>
 <iframe id="nexus-frame" src="nexus-chat-core.html" title="Nexus Chat"></iframe>
-<div class="boot" id="boot"><strong>Nexus</strong>iPhone-sichere UI Icons werden vorbereitet…</div>
+<div class="boot" id="boot"><strong>Nexus</strong>Offizielle Fluent UI SVG Icons werden vorbereitet…</div>
 <script>
 const frame = document.getElementById('nexus-frame');
 const boot = document.getElementById('boot');
@@ -35,7 +37,7 @@ frame.addEventListener('load', () => {
     if (!doc) throw new Error('Kein Zugriff auf das Nexus Dokument.');
     const script = doc.createElement('script');
     script.src = new URL('nexus-icons-inline.js', window.location.href).href;
-    script.onload = () => setBoot('Inline SVG Icons aktiv. iPhone benötigt keine Icon-Font mehr.', 'ok');
+    script.onload = () => setBoot('Offizielle Fluent UI SVG Icons aktiv.', 'ok');
     script.onerror = () => setBoot('Icon Script konnte nicht geladen werden.', 'error');
     doc.body.appendChild(script);
   } catch (error) {
