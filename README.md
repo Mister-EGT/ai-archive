@@ -12,7 +12,7 @@ Dieses Repository enthält aktuell folgende Seiten:
 | `llm-archive/` | LLM Model Archiv mit Suche, Filtern, Sortierung, Detailansicht und Tokenrechner |
 | `zeit-dashboard.html` | Zeit Dashboard mit mehreren Zeitquellen und lokaler Fallback Anzeige |
 | `neural-3d.html` | 3D Visualisierung und Analyseoberfläche für neuronale Netzwerke |
-| `nexus-chat-glass.html` | Experimentelle OpenRouter Chat Oberfläche im Glass Design |
+| `nexus-chat.html` | OpenRouter Chat Oberfläche mit plattformunabhängigen Fluent UI Icons |
 | `coc-dashboard/` | Clash of Clans Control Room mit Token Speicherung, Diagnose und API Ansichten |
 | `opsucht/` | OPSUCHT API Dashboard mit Statuskarten und Detailansichten |
 
@@ -41,9 +41,13 @@ Funktionen:
 - Statusanzeige für aktive und passive Zeitquellen
 - Automatischer Fallback auf die lokale Browserzeit, falls eine API nicht erreichbar ist
 
+### Nexus Chat
+
+Nexus Chat wird über `nexus-chat.html` geöffnet. Die eigentliche Chat App liegt intern in `nexus-chat-core.html`; die öffentliche Startdatei ergänzt plattformunabhängige inline SVG Icons, damit die UI Icons nicht mehr von Windows Schriftarten abhängen.
+
 ### Weitere Experimente
 
-Neben den zwei größeren Bereichen liegen weitere einzelne HTML Tools im Repository. Sie sind bewusst leichtgewichtig gehalten und benötigen keine Build Pipeline.
+Neben den größeren Bereichen liegen weitere einzelne HTML Tools im Repository. Sie sind bewusst leichtgewichtig gehalten und benötigen keine Build Pipeline.
 
 ## Projektstruktur
 
@@ -58,7 +62,8 @@ Neben den zwei größeren Bereichen liegen weitere einzelne HTML Tools im Reposi
 ├── zeit-dashboard.css
 ├── zeit-dashboard.js
 ├── neural-3d.html
-├── nexus-chat-glass.html
+├── nexus-chat.html
+├── nexus-chat-core.html
 ├── coc-dashboard/
 ├── llm-archive/
 └── opsucht/
