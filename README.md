@@ -1,6 +1,6 @@
 # Webseite
 
-Eine kleine Sammlung von Webtools und Dashboards.
+Eine kleine Sammlung von Webtools, Dashboards und Experimenten.
 
 ## Inhalt
 
@@ -11,6 +11,10 @@ Dieses Repository enthält aktuell folgende Seiten:
 | `index.html` | Startseite mit Navigation zu den einzelnen Tools |
 | `llm-archive/` | LLM Model Archiv mit Suche, Filtern, Sortierung, Detailansicht und Tokenrechner |
 | `zeit-dashboard.html` | Zeit Dashboard mit mehreren Zeitquellen und lokaler Fallback Anzeige |
+| `neural-3d.html` | 3D Visualisierung und Analyseoberfläche für neuronale Netzwerke |
+| `nexus-chat-glass.html` | Experimentelle OpenRouter Chat Oberfläche im Glass Design |
+| `coc-dashboard/` | Clash of Clans Control Room mit Token Speicherung, Diagnose und API Ansichten |
+| `opsucht/` | OPSUCHT API Dashboard mit Statuskarten und Detailansichten |
 
 ## Funktionen
 
@@ -37,6 +41,10 @@ Funktionen:
 - Statusanzeige für aktive und passive Zeitquellen
 - Automatischer Fallback auf die lokale Browserzeit, falls eine API nicht erreichbar ist
 
+### Weitere Experimente
+
+Neben den zwei größeren Bereichen liegen weitere einzelne HTML Tools im Repository. Sie sind bewusst leichtgewichtig gehalten und benötigen keine Build Pipeline.
+
 ## Projektstruktur
 
 ```text
@@ -49,17 +57,16 @@ Funktionen:
 ├── zeit-dashboard.html
 ├── zeit-dashboard.css
 ├── zeit-dashboard.js
-└── llm-archive/
-    ├── index.html
-    ├── styles.css
-    ├── app.js
-    ├── models.json
-    └── assets/
+├── neural-3d.html
+├── nexus-chat-glass.html
+├── coc-dashboard/
+├── llm-archive/
+└── opsucht/
 ```
 
 ## Lokal starten
 
-Da das LLM Archiv Daten über `fetch("models.json")` lädt, sollte die Seite über einen lokalen Webserver geöffnet werden.
+Da einzelne Seiten Daten über `fetch(...)` laden, sollte das Projekt über einen lokalen Webserver geöffnet werden.
 
 Beispiel mit Python:
 
@@ -75,8 +82,9 @@ http://localhost:8000
 
 ## Wartung
 
-- HTML, CSS und JavaScript sollten möglichst getrennt bleiben.
 - Neue Tools sollten über die Startseite verlinkt werden.
+- HTML, CSS und JavaScript sollten möglichst getrennt bleiben, wenn ein Tool größer wird.
+- Einzelne Experimente dürfen weiterhin als eigenständige HTML Dateien liegen, solange sie übersichtlich bleiben.
 - Modelldaten in `llm-archive/models.json` sollten regelmäßig geprüft werden, da sich Preise, Kontextfenster und Verfügbarkeit ändern können.
 - Die `.editorconfig` sorgt für einheitliche Formatierung in Editoren.
 
