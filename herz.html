@@ -1,0 +1,5 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script></head><body><div id="plot" style="width:100%;height:95vh"></div><script>
+function f(t,T){let s=0;for(let k=-5;k<=15;k++){s+=0.15*Math.exp(-50*(t-k*T-0.2)**2)-0.3*Math.exp(-800*(t-k*T-0.4)**2)+1.2*Math.exp(-1500*(t-k*T-0.42)**2)-0.4*Math.exp(-800*(t-k*T-0.44)**2)+0.35*Math.exp(-80*(t-k*T-0.7)**2);}return s;}
+let T=1;let x=[],y=[];for(let t=0;t<=10;t+=0.005){x.push(t);y.push(f(t,T));}
+Plotly.newPlot('plot',[{x:x,y:y,mode:'lines',name:'EKG'}],{title:'Periodische EKG-ähnliche Funktion (Sinusrhythmus)',xaxis:{title:'t'},yaxis:{title:'f(t)'}},{responsive:true});
+</script></body></html>
